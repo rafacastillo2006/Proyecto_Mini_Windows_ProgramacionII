@@ -1,35 +1,78 @@
 package MiniWindows.Persistencia;
 
 import MiniWindows.Estructuras.ListaEnlazada;
-import java.io.*;
+import MiniWindows.Excepciones.ArchivoCorruptoException;
+import MiniWindows.Excepciones.OperacionArchivoException;
 
-public class GestorBinario<T extends Serializable> {
-    private String rutaArchivo;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.concurrent.locks.ReentrantLock;
 
-    public GestorBinario(String rutaArchivo) {
-        this.rutaArchivo = rutaArchivo;
+public final class GestorBinario {
+
+    private static final int FIRMA = 0x4D575245;
+    private static final int VERSION = 1;
+
+    private GestorBinario() {
     }
 
-    public void guardarLista(ListaEnlazada<T> lista) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(rutaArchivo))) {
-            oos.writeObject(lista);
-        } catch (IOException e) {
-            System.err.println("Error al guardar en binario: " + e.getMessage());
+    public static <T extends Serializable> void guardar(Path archivo, ListaEnlazada<T> registros)
+            throws OperacionArchivoException {
+        ReentrantLock cerrojo = Cerrojos.de(archivo);
+        cerrojo.lock();
+        try {
+            Files.createDirectories(archivo.getParent());
+            Path temporal = archivo.resolveSibling(archivo.getFileName() + ".tmp");
+            try (ObjectOutputStream salida = new ObjectOutputStream(
+                    new BufferedOutputStream(Files.newOutputStream(temporal)))) {
+                salida.writeInt(FIRMA);
+                salida.writeInt(VERSION);
+                salida.writeInt(registros.tamano());
+                for (T registro : registros) {
+                    salida.writeObject(registro);
+                }
+            }
+            Files.move(temporal, archivo, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException error) {
+            try {
+                Files.deleteIfExists(archivo.resolveSibling(archivo.getFileName() + ".tmp"));
+            } catch (IOException ignorado) {
+            }
+            throw new OperacionArchivoException("No se pudo guardar " + archivo.getFileName(), error);
+        } finally {
+            cerrojo.unlock();
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public ListaEnlazada<T> leerLista() {
-        File archivo = new File(rutaArchivo);
-        if (!archivo.exists() || archivo.length() == 0) {
-            return new ListaEnlazada<>();
+    public static <T extends Serializable> ListaEnlazada<T> cargar(Path archivo, Class<T> tipo)
+            throws ArchivoCorruptoException {
+        ListaEnlazada<T> registros = new ListaEnlazada<>();
+        if (!Files.exists(archivo)) {
+            return registros;
         }
-
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(archivo))) {
-            return (ListaEnlazada<T>) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error al leer desde binario: " + e.getMessage());
-            return new ListaEnlazada<>();
+        ReentrantLock cerrojo = Cerrojos.de(archivo);
+        cerrojo.lock();
+        try (ObjectInputStream entrada = new ObjectInputStream(
+                new BufferedInputStream(Files.newInputStream(archivo)))) {
+            if (entrada.readInt() != FIRMA || entrada.readInt() != VERSION) {
+                throw new ArchivoCorruptoException(archivo.getFileName().toString());
+            }
+            int cantidad = entrada.readInt();
+            for (int posicion = 0; posicion < cantidad; posicion++) {
+                registros.agregar(tipo.cast(entrada.readObject()));
+            }
+            return registros;
+        } catch (IOException | ClassNotFoundException | ClassCastException error) {
+            throw new ArchivoCorruptoException(archivo.getFileName().toString(), error);
+        } finally {
+            cerrojo.unlock();
         }
     }
 }

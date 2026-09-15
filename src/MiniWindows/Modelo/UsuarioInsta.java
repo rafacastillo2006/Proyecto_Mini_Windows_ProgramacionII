@@ -22,8 +22,8 @@ public class UsuarioInsta implements Serializable {
         this.password = password;
         this.edad = edad;
         this.fotoPerfil = fotoPerfil;
-        this.fechaRegistro = LocalDate.now(); // Se toma automáticamente del sistema
-        this.activa = true; // Activa por defecto
+        this.fechaRegistro = LocalDate.now();
+        this.activa = true;
     }
 
     // Getters y Setters

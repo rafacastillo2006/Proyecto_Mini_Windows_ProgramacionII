@@ -3,22 +3,22 @@ package MiniWindows.Estructuras;
 import java.io.Serializable;
 
 public class Nodo<T> implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
-    private T dato;
+    private T valor;
     private Nodo<T> siguiente;
 
-    public Nodo(T dato) {
-        this.dato = dato;
-        this.siguiente = null;
+    public Nodo(T valor) {
+        this.valor = valor;
     }
 
-    public T getDato() {
-        return dato;
+    public T getValor() {
+        return valor;
     }
 
-    public void setDato(T dato) {
-        this.dato = dato;
+    public void setValor(T valor) {
+        this.valor = valor;
     }
 
     public Nodo<T> getSiguiente() {
