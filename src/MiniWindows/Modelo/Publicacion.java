@@ -1,33 +1,24 @@
 package MiniWindows.Modelo;
 
 import java.io.Serializable;
-import java.util.Date;
 
 public class Publicacion implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String autor;
-    private String contenido;
-    private Date fecha;
+    private String descripcion;
     private String rutaImagen;
-    private String modoMobile;
+    private String tipoMobile;
 
-    public Publicacion(String autor, String contenido, String rutaImagen, String modoMobile) {
+    public Publicacion(String autor, String descripcion, String rutaImagen, String tipoMobile) {
         this.autor = autor;
-        this.contenido = contenido;
-        this.fecha = new Date();
+        this.descripcion = descripcion;
         this.rutaImagen = rutaImagen;
-        this.modoMobile = modoMobile;
+        this.tipoMobile = tipoMobile;
     }
 
-
     public String getAutor() { return autor; }
-
-    public String getContenido() { return contenido; }
-
-    public Date getFecha() { return fecha; }
-
+    public String getDescripcion() { return descripcion; }
     public String getRutaImagen() { return rutaImagen; }
-
-    public String getModoMobile() { return modoMobile; }
+    public String getTipoMobile() { return tipoMobile; }
 }

@@ -1,38 +1,27 @@
 package MiniWindows.Modelo;
 
 import java.io.Serializable;
-import java.util.Date;
 
 public class Mensaje implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String emisor;
     private String receptor;
-    private Date fechaHora;
-    private String mensaje;
-    private String tipo; //
-    private boolean leido;
+    private String contenido;
+    private String tipo;
 
-    public Mensaje(String emisor, String receptor, String mensaje, String tipo) {
+    public Mensaje(String emisor, String receptor, String contenido, String tipo) {
         this.emisor = emisor;
         this.receptor = receptor;
-        this.fechaHora = new Date();
-        this.mensaje = mensaje;
+        this.contenido = contenido;
         this.tipo = tipo;
-        this.leido = false;
     }
 
     public String getEmisor() { return emisor; }
 
     public String getReceptor() { return receptor; }
 
-    public Date getFechaHora() { return fechaHora; }
-
-    public String getMensaje() { return mensaje; }
+    public String getContenido() { return contenido; }
 
     public String getTipo() { return tipo; }
-
-    public boolean isLeido() { return leido; }
-
-    public void setLeido(boolean leido) { this.leido = leido; }
 }

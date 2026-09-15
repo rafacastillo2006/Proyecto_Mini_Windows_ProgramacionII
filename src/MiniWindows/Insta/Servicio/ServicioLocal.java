@@ -6,10 +6,10 @@ import MiniWindows.Excepciones.*;
 import MiniWindows.Insta.Logica.*;
 
 public class ServicioLocal implements ServicioInsta {
-    private GestorUsuariosInsta gestorUsuarios = new GestorUsuariosInsta();
-    private GestorRelaciones gestorRelaciones = new GestorRelaciones();
-    private GestorTimeline gestorTimeline = new GestorTimeline();
-    private GestorInbox gestorInbox = new GestorInbox();
+    private GestorUsuariosIG gestorUsuarios = new GestorUsuariosIG();
+    private GestorRelacionesUsuarios gestorRelaciones = new GestorRelacionesUsuarios();
+    private GestorLineaTiempo gestorLineaTiempo = new GestorLineaTiempo();
+    private GestorBandejaEntrada gestorBandejaEntrada = new GestorBandejaEntrada();
 
     @Override
     public UsuarioInsta autenticar(String username, String password) throws CuentaDesactivadaException {
@@ -22,13 +22,13 @@ public class ServicioLocal implements ServicioInsta {
     }
 
     @Override
-    public void publicarInsta(String username, String descripcion, String rutaImagen, String tipoMobile) {
-        gestorTimeline.publicar(username, descripcion, rutaImagen, tipoMobile);
+    public void hacerPost(String username, String descripcion, String rutaImagen, String tipoMobile) {
+        gestorLineaTiempo.publicar(username, descripcion, rutaImagen, tipoMobile);
     }
 
     @Override
     public ListaEnlazada<Publicacion> obtenerTimeline(String username) {
-        return gestorTimeline.obtenerTimelineUsuario(username);
+        return gestorLineaTiempo.obtenerTimelineUsuario(username);
     }
 
     @Override
@@ -57,13 +57,13 @@ public class ServicioLocal implements ServicioInsta {
     }
 
     @Override
-    public void enviarMensajeInbox(String emisor, String receptor, String contenido, String tipo) {
-        gestorInbox.enviarMensaje(emisor, receptor, contenido, tipo);
+    public void enviarMensaje(String emisor, String receptor, String contenido, String tipo) {
+        gestorBandejaEntrada.enviarMensaje(emisor, receptor, contenido, tipo);
     }
 
     @Override
-    public ListaEnlazada<MensajeInbox> obtenerConversacion(String usuario1, String usuario2) {
-        return gestorInbox.obtenerConversacion(usuario1, usuario2);
+    public ListaEnlazada<Mensaje> obtenerConversacion(String usuario1, String usuario2) {
+        return gestorBandejaEntrada.obtenerConversacion(usuario1, usuario2);
     }
 
     @Override
