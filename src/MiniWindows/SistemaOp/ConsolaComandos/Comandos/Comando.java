@@ -1,4 +1,9 @@
 package MiniWindows.SistemaOp.ConsolaComandos.Comandos;
 
-public class Comando {
+import MiniWindows.Excepciones.MiniWindowsException;
+
+@FunctionalInterface
+public interface Comando {
+
+    String ejecutar(String argumento) throws MiniWindowsException;
 }
