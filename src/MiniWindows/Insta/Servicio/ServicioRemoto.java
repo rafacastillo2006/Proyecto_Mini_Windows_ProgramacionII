@@ -68,8 +68,9 @@ public class ServicioRemoto implements ServicioInsta {
     }
 
     @Override
-    public void darMeGusta(Publicacion publicacion, boolean marcado) throws MiniWindowsException {
-        cliente.enviar("ME_GUSTA", publicacion, marcado);
+    public void darMeGusta(Publicacion publicacion, String username, boolean marcado)
+            throws MiniWindowsException {
+        cliente.enviar("ME_GUSTA", publicacion, username, marcado);
     }
 
     @Override

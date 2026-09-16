@@ -31,7 +31,7 @@ public class CargaIMGS {
                 }
             });
         } catch (RejectedExecutionException cerrado) {
-            // el panel se esta cerrando, no hay nada que mostrar
+            cargador.shutdownNow();
         }
     }
 

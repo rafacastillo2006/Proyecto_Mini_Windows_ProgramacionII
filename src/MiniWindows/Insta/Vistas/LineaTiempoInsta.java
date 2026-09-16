@@ -11,21 +11,21 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class LineaTiempoInsta extends ScrollPane {
 
-    private static final int SUGERENCIAS = 5;
+    private static final int SUGERENCIAS = 4;
 
     private final VentanaInsta ventana;
-    private final VBox columna = new VBox(18);
+    private final VBox columna = new VBox(16);
 
     public LineaTiempoInsta(VentanaInsta ventana) {
         this.ventana = ventana;
 
         columna.setAlignment(Pos.TOP_CENTER);
-        columna.setPadding(new Insets(20, 20, 24, 20));
+        columna.setPadding(new Insets(20, 20, 26, 20));
+        columna.setStyle(EstilosInsta.PAGINA);
 
         setContent(columna);
         setFitToWidth(true);
@@ -40,11 +40,12 @@ public class LineaTiempoInsta extends ScrollPane {
         String yo = ventana.getContexto().getUsuarioActual();
         ListaEnlazada<Publicacion> feed = ventana.getContexto().getServicio().lineaDeTiempo(yo);
 
+        columna.getChildren().add(panelSugerencias());
         if (feed.estaVacia()) {
-            Label vacio = EstilosInsta.leyenda("Todavia no hay publicaciones. Sigue algunas cuentas para empezar.");
+            Label vacio = EstilosInsta.leyenda("Todavía no hay publicaciones. Sigue algunas cuentas para empezar.");
+            vacio.setPadding(new Insets(20, 0, 0, 0));
             columna.getChildren().add(vacio);
         }
-        columna.getChildren().add(panelSugerencias());
         for (Publicacion publicacion : feed) {
             columna.getChildren().add(new TarjetaPublicacion(ventana, publicacion));
         }
@@ -55,38 +56,28 @@ public class LineaTiempoInsta extends ScrollPane {
         ListaEnlazada<UsuarioInsta> sugeridos =
                 ventana.getContexto().getServicio().sugerencias(yo, SUGERENCIAS);
 
-        VBox panel = new VBox(8);
+        Label titulo = EstilosInsta.leyenda("Sugerencias para ti");
+        titulo.setPadding(new Insets(0, 0, 2, 10));
+
+        VBox panel = new VBox(2, titulo);
         panel.setMaxWidth(440);
-        panel.setPadding(new Insets(12));
+        panel.setMinWidth(440);
+        panel.setPadding(new Insets(12, 4, 8, 4));
         panel.setStyle(EstilosInsta.TARJETA);
-        panel.getChildren().add(EstilosInsta.leyenda("Sugerencias para ti"));
 
         if (sugeridos.estaVacia()) {
-            panel.getChildren().add(EstilosInsta.leyenda("Ya sigues a todas las cuentas disponibles."));
+            Label ninguna = EstilosInsta.leyenda("Ya sigues a todas las cuentas disponibles.");
+            ninguna.setPadding(new Insets(4, 0, 4, 10));
+            panel.getChildren().add(ninguna);
             return panel;
         }
         for (UsuarioInsta sugerido : sugeridos) {
-            panel.getChildren().add(fila(sugerido));
+            panel.getChildren().add(FilaUsuario.crear(ventana, sugerido, this::seguir, true));
         }
         return panel;
     }
 
-    private HBox fila(UsuarioInsta sugerido) {
-        Label nombre = EstilosInsta.texto("@" + sugerido.getUsername());
-        nombre.setStyle(nombre.getStyle() + " -fx-font-weight: bold;");
-
-        VBox datos = new VBox(0, nombre, EstilosInsta.leyenda(sugerido.getNombreCompleto()));
-
-        Button seguir = EstilosInsta.enlace("Seguir");
-        seguir.setOnAction(evento -> seguir(sugerido));
-
-        HBox fila = new HBox(10, EstilosInsta.avatar(sugerido, 36), datos,
-                EstilosInsta.espaciador(), seguir);
-        fila.setAlignment(Pos.CENTER_LEFT);
-        return fila;
-    }
-
-    private void seguir(UsuarioInsta sugerido) {
+    private void seguir(UsuarioInsta sugerido, Button boton) {
         try {
             ventana.getContexto().getServicio()
                     .seguir(ventana.getContexto().getUsuarioActual(), sugerido.getUsername());

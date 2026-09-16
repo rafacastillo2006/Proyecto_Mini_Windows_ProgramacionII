@@ -37,7 +37,7 @@ public class EditarPerfilInsta extends VBox {
 
         setAlignment(Pos.TOP_CENTER);
         setPadding(new Insets(24));
-        setStyle("-fx-background-color: " + EstilosInsta.FONDO + ";");
+        setStyle(EstilosInsta.PAGINA);
 
         nombre.setText(perfil.getNombreCompleto());
         nombre.setStyle(EstilosInsta.CAMPO);
@@ -77,7 +77,7 @@ public class EditarPerfilInsta extends VBox {
         FileChooser selector = new FileChooser();
         selector.setTitle("Foto de perfil");
         selector.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Imagenes", "*.png", "*.jpg", "*.jpeg"));
+                new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg"));
         File elegido = selector.showOpenDialog(getScene() == null ? null : getScene().getWindow());
         if (elegido == null) {
             return;
@@ -85,7 +85,7 @@ public class EditarPerfilInsta extends VBox {
         try {
             byte[] ajustada = ProcesadorImagen.ajustar(Files.readAllBytes(elegido.toPath()), LADO_AVATAR);
             if (ajustada == null) {
-                aviso.setText("Ese archivo no es una imagen valida.");
+                aviso.setText("Ese archivo no es una imagen válida.");
                 return;
             }
             foto = ajustada;
@@ -102,6 +102,10 @@ public class EditarPerfilInsta extends VBox {
     }
 
     private void guardar() {
+        if (nombre.getText().trim().isEmpty()) {
+            aviso.setText("El nombre completo no puede quedar vacío.");
+            return;
+        }
         try {
             perfil.setNombreCompleto(nombre.getText().trim());
             perfil.setBiografia(biografia.getText().trim());
@@ -131,8 +135,8 @@ public class EditarPerfilInsta extends VBox {
     private void cambiarEstado() {
         boolean activa = perfil.estaActiva();
         if (activa && !ventana.confirmar("Desactivar cuenta",
-                "Mientras este desactivada tu cuenta no aparecera en las busquedas "
-                        + "ni se veran tus publicaciones. ¿Continuar?")) {
+                "Mientras esté desactivada tu cuenta no aparecerá en las búsquedas "
+                        + "ni se verán tus publicaciones. ¿Continuar?")) {
             return;
         }
         try {
@@ -142,7 +146,7 @@ public class EditarPerfilInsta extends VBox {
                 ventana.getContexto().getSesion().cerrar();
                 ventana.mostrarLogin();
             } else {
-                aviso.setText("Tu cuenta quedo activa otra vez.");
+                aviso.setText("Tu cuenta quedó activa otra vez.");
                 ventana.mostrarEditarPerfil();
             }
         } catch (MiniWindowsException error) {

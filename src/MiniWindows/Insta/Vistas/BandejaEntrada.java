@@ -37,6 +37,7 @@ public class BandejaEntrada extends BorderPane {
     private final TextField entrada = new TextField();
     private final Label aviso = EstilosInsta.leyenda("");
     private final FlowPane galeriaStickers = new FlowPane(8, 8);
+    private final ScrollPane marco = new ScrollPane(mensajes);
 
     private Notificaciones vigilante;
     private String conversando;
@@ -45,16 +46,19 @@ public class BandejaEntrada extends BorderPane {
         this.ventana = ventana;
 
         setPadding(new Insets(16));
-        setStyle("-fx-background-color: " + EstilosInsta.FONDO + ";");
+        setStyle(EstilosInsta.PAGINA);
 
         contactos.setPrefWidth(190);
         contactos.setPlaceholder(EstilosInsta.leyenda("Sin conversaciones"));
+        contactos.setStyle("-fx-font-family: '" + EstilosInsta.FUENTE + "'; -fx-font-size: 13px; "
+                + "-fx-background-color: " + EstilosInsta.SUPERFICIE + "; -fx-background-radius: 8; "
+                + "-fx-border-color: " + EstilosInsta.BORDE + "; -fx-border-radius: 8;");
         contactos.getSelectionModel().selectedItemProperty().addListener(
                 (observable, anterior, actual) -> abrirConversacion(actual));
 
-        ScrollPane marco = new ScrollPane(mensajes);
         marco.setFitToWidth(true);
-        marco.setStyle("-fx-background: white; -fx-background-color: white; -fx-border-color: transparent;");
+        marco.setStyle("-fx-background: " + EstilosInsta.SUPERFICIE + "; -fx-background-color: "
+                + EstilosInsta.SUPERFICIE + "; -fx-border-color: transparent;");
         mensajes.setPadding(new Insets(12));
 
         entrada.setPromptText("Escribe un mensaje (máximo " + Mensaje.LIMITE_CARACTERES + ")");
@@ -127,6 +131,14 @@ public class BandejaEntrada extends BorderPane {
             aviso.setText("No existe @" + nombre);
             return;
         }
+        if (existe.getUsername().equalsIgnoreCase(ventana.getContexto().getUsuarioActual())) {
+            aviso.setText("No puedes escribirte a ti mismo.");
+            return;
+        }
+        if (!existe.estaActiva()) {
+            aviso.setText("La cuenta @" + existe.getUsername() + " está desactivada.");
+            return;
+        }
         aviso.setText("");
         if (!contactos.getItems().contains(existe.getUsername())) {
             contactos.getItems().add(existe.getUsername());
@@ -161,6 +173,7 @@ public class BandejaEntrada extends BorderPane {
         } catch (MiniWindowsException error) {
             aviso.setText(error.getMessage());
         }
+        javafx.application.Platform.runLater(() -> marco.setVvalue(1));
     }
 
     private VBox burbuja(Mensaje mensaje, boolean propio) {
@@ -176,12 +189,15 @@ public class BandejaEntrada extends BorderPane {
             ventana.getCargador().cargar(mensaje.getSticker(), LADO_STICKER, vista::setImage);
             caja.getChildren().add(vista);
         } else {
-            Label texto = EstilosInsta.texto(mensaje.getContenido());
+            Label texto = new Label(mensaje.getContenido());
+            texto.setMnemonicParsing(false);
             texto.setWrapText(true);
             texto.setMaxWidth(320);
-            texto.setPadding(new Insets(8, 12, 8, 12));
-            texto.setStyle(texto.getStyle() + " -fx-background-radius: 14; -fx-background-color: "
-                    + (propio ? "#dbeafe" : "#efefef") + ";");
+            texto.setPadding(new Insets(8, 13, 8, 13));
+            texto.setStyle("-fx-font-family: '" + EstilosInsta.FUENTE + "'; -fx-font-size: 13.5px; "
+                    + "-fx-background-radius: 16; -fx-text-fill: "
+                    + (propio ? "white" : EstilosInsta.TEXTO) + "; -fx-background-color: "
+                    + (propio ? EstilosInsta.AZUL : EstilosInsta.SUAVE) + ";");
             caja.getChildren().add(texto);
         }
 
@@ -225,7 +241,7 @@ public class BandejaEntrada extends BorderPane {
         FileChooser selector = new FileChooser();
         selector.setTitle("Importar sticker");
         selector.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Imagenes", "*.png", "*.jpg", "*.jpeg"));
+                new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg"));
         File elegido = selector.showOpenDialog(getScene() == null ? null : getScene().getWindow());
         if (elegido == null) {
             return;
@@ -248,7 +264,7 @@ public class BandejaEntrada extends BorderPane {
 
     private void enviarSticker(Sticker sticker) {
         if (conversando == null) {
-            aviso.setText("Elige primero una conversacion.");
+            aviso.setText("Elige primero una conversación.");
             return;
         }
         enviar(new Mensaje(ventana.getContexto().getUsuarioActual(), conversando,
@@ -279,7 +295,7 @@ public class BandejaEntrada extends BorderPane {
             return;
         }
         if (!ventana.confirmar("Eliminar conversación",
-                "Se borrara toda la conversacion con @" + conversando + ". ¿Continuar?")) {
+                "Se borrará toda la conversación con @" + conversando + ". ¿Continuar?")) {
             return;
         }
         try {

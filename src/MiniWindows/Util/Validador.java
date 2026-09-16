@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 public final class Validador {
 
     public static final int LONGITUD_MINIMA_CONTRASENA = 6;
-    public static final String REGLA_CONTRASENA = "La contrasena debe ser alfanumerica: minimo "
-            + LONGITUD_MINIMA_CONTRASENA + " caracteres con al menos una letra y un numero";
+    public static final String REGLA_CONTRASENA = "La contraseña debe ser alfanumérica: mínimo "
+            + LONGITUD_MINIMA_CONTRASENA + " caracteres con al menos una letra y un número";
     public static final int LONGITUD_MAXIMA_NOMBRE_ARCHIVO = 60;
     public static final String CARACTERES_PROHIBIDOS = "\\/:*?\"<>|";
 

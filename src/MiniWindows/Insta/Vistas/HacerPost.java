@@ -38,6 +38,7 @@ public class HacerPost extends VBox {
     private final ImageView previa = new ImageView();
 
     private byte[] imagen;
+    private boolean generada;
 
     public HacerPost(VentanaInsta ventana) {
         this.ventana = ventana;
@@ -45,7 +46,7 @@ public class HacerPost extends VBox {
         setAlignment(Pos.TOP_CENTER);
         setPadding(new Insets(20));
         setSpacing(12);
-        setStyle("-fx-background-color: " + EstilosInsta.FONDO + ";");
+        setStyle(EstilosInsta.PAGINA);
 
         descripcion.setPromptText("Descripción, #hashtags y @menciones");
         descripcion.setWrapText(true);
@@ -62,6 +63,11 @@ public class HacerPost extends VBox {
                 ProcesadorImagen.PAISAJE);
         formato.setValue(ProcesadorImagen.CUADRADO);
         formato.setMaxWidth(Double.MAX_VALUE);
+        formato.valueProperty().addListener((observable, anterior, actual) -> {
+            if (generada && actual != null) {
+                generar();
+            }
+        });
 
         carpeta.setMaxWidth(Double.MAX_VALUE);
         recargarCarpetas();
@@ -72,7 +78,7 @@ public class HacerPost extends VBox {
         StackPane marcoPrevia = new StackPane(previa);
         marcoPrevia.setPrefSize(LADO_PREVIA, LADO_PREVIA);
         marcoPrevia.setMaxSize(LADO_PREVIA, LADO_PREVIA);
-        marcoPrevia.setStyle("-fx-background-color: #efefef; -fx-background-radius: 8;");
+        marcoPrevia.setStyle("-fx-background-color: " + EstilosInsta.SUAVE + "; -fx-background-radius: 8;");
 
         aviso.setMinHeight(28);
 
@@ -129,10 +135,7 @@ public class HacerPost extends VBox {
         desdeDisco.setOnAction(evento -> elegirImagen());
 
         Button generar = EstilosInsta.botonSuave("Generar una");
-        generar.setOnAction(evento -> {
-            imagen = ArteGenerado.publicacion((int) (System.nanoTime() % 97), formato.getValue());
-            mostrarPrevia();
-        });
+        generar.setOnAction(evento -> generar());
 
         HBox fila = new HBox(8, desdeDisco, generar);
         fila.setAlignment(Pos.CENTER);
@@ -141,9 +144,9 @@ public class HacerPost extends VBox {
 
     private void elegirImagen() {
         FileChooser selector = new FileChooser();
-        selector.setTitle("Imagen de la publicacion");
+        selector.setTitle("Imagen de la publicación");
         selector.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Imagenes", "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif"));
+                new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif"));
         File elegido = selector.showOpenDialog(getScene() == null ? null : getScene().getWindow());
         if (elegido == null) {
             return;
@@ -151,15 +154,23 @@ public class HacerPost extends VBox {
         try {
             byte[] ajustada = ProcesadorImagen.ajustar(Files.readAllBytes(elegido.toPath()), LADO_MAXIMO);
             if (ajustada == null) {
-                aviso.setText("Ese archivo no es una imagen valida.");
+                aviso.setText("Ese archivo no es una imagen válida.");
                 return;
             }
             imagen = ajustada;
+            generada = false;
             aviso.setText("");
             mostrarPrevia();
         } catch (Exception error) {
             aviso.setText("No se pudo leer la imagen.");
         }
+    }
+
+    private void generar() {
+        imagen = ArteGenerado.publicacion((int) (System.nanoTime() % 97), formato.getValue());
+        generada = true;
+        aviso.setText("");
+        mostrarPrevia();
     }
 
     private void mostrarPrevia() {
@@ -182,7 +193,7 @@ public class HacerPost extends VBox {
         try {
             ventana.getContexto().getServicio().publicar(new Publicacion(
                     ventana.getContexto().getUsuarioActual(), texto, imagen, formato.getValue(),
-                    destino, java.time.LocalDateTime.now(), 0));
+                    destino, java.time.LocalDateTime.now()));
             ventana.mostrarInicio();
         } catch (MiniWindowsException error) {
             aviso.setText(error.getMessage());

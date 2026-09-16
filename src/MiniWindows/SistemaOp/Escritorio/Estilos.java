@@ -74,18 +74,21 @@ public final class Estilos {
 
     public static Button botonPrimario(String texto) {
         Button boton = new Button(texto);
+        boton.setMnemonicParsing(false);
         hover(boton, BOTON_PRIMARIO, BOTON_PRIMARIO_ENCIMA);
         return boton;
     }
 
     public static Button botonSecundario(String texto) {
         Button boton = new Button(texto);
+        boton.setMnemonicParsing(false);
         hover(boton, BOTON_SECUNDARIO, BOTON_SECUNDARIO_ENCIMA);
         return boton;
     }
 
     public static Button botonHerramienta(String icono, String texto, String ayuda) {
         Button boton = new Button(texto);
+        boton.setMnemonicParsing(false);
         boton.setGraphic(Iconos.crear(icono, 16, Color.web(TEXTO)));
         boton.setGraphicTextGap(8);
         boton.setTooltip(new Tooltip(ayuda));
@@ -95,6 +98,7 @@ public final class Estilos {
 
     public static Button botonIcono(String icono, String ayuda) {
         Button boton = new Button();
+        boton.setMnemonicParsing(false);
         boton.setGraphic(Iconos.crear(icono, 16, Color.web(TEXTO)));
         boton.setTooltip(new Tooltip(ayuda));
         boton.setMinSize(32, 32);

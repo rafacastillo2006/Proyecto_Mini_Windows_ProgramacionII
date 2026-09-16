@@ -57,7 +57,7 @@ public class ServicioLocal implements ServicioInsta {
     @Override
     public void publicar(Publicacion publicacion) throws MiniWindowsException {
         if (publicacion.getDescripcion().length() > Publicacion.LIMITE_DESCRIPCION) {
-            throw new OperacionArchivoException("La descripcion no puede pasar de "
+            throw new OperacionArchivoException("La descripción no puede pasar de "
                     + Publicacion.LIMITE_DESCRIPCION + " caracteres");
         }
         lineaTiempo.publicar(publicacion);
@@ -80,8 +80,9 @@ public class ServicioLocal implements ServicioInsta {
     }
 
     @Override
-    public void darMeGusta(Publicacion publicacion, boolean marcado) throws MiniWindowsException {
-        lineaTiempo.darMeGusta(publicacion, marcado);
+    public void darMeGusta(Publicacion publicacion, String username, boolean marcado)
+            throws MiniWindowsException {
+        lineaTiempo.darMeGusta(publicacion, username, marcado);
     }
 
     @Override
@@ -205,7 +206,7 @@ public class ServicioLocal implements ServicioInsta {
     @Override
     public void crearCarpetaPersonal(String username, String nombre) throws MiniWindowsException {
         if (!Validador.nombreArchivoValido(nombre)) {
-            throw new OperacionArchivoException("Ese nombre de carpeta no es valido");
+            throw new OperacionArchivoException("Ese nombre de carpeta no es válido");
         }
         try {
             Files.createDirectories(Rutas.getFoldersPersonalesDe(username).resolve(nombre));
@@ -227,7 +228,7 @@ public class ServicioLocal implements ServicioInsta {
             String nombre = publicacion.getFecha().toString().replaceAll("[^0-9]", "") + ".png";
             Files.write(destino.resolve(nombre), publicacion.getImagen());
         } catch (IOException error) {
-            System.err.println("No se pudo copiar la imagen de la publicacion: " + error.getMessage());
+            System.err.println("No se pudo copiar la imagen de la publicación: " + error.getMessage());
         }
     }
 }

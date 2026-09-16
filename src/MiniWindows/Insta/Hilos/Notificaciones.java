@@ -38,9 +38,14 @@ public class Notificaciones extends Thread {
                 return;
             }
             ListaEnlazada<Mensaje> bandeja = servicio.bandejaDe(username);
-            if (bandeja.tamano() > mensajesVistos) {
+            int total = bandeja.tamano();
+            if (total == mensajesVistos) {
+                continue;
+            }
+            boolean llegoAlgo = total > mensajesVistos;
+            mensajesVistos = total;
+            if (llegoAlgo) {
                 Mensaje ultimo = bandeja.ultimo();
-                mensajesVistos = bandeja.tamano();
                 if (!ultimo.getEmisor().equalsIgnoreCase(username)) {
                     Platform.runLater(() -> alLlegar.accept(ultimo));
                 }

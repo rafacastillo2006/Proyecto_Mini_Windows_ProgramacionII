@@ -8,7 +8,7 @@ import java.util.Locale;
 
 public class Publicacion implements Serializable {
 
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 4L;
 
     public static final int LIMITE_DESCRIPCION = 220;
 
@@ -18,21 +18,20 @@ public class Publicacion implements Serializable {
     private final String formato;
     private final String carpetaPersonal;
     private final LocalDateTime fecha;
-    private int meGusta;
+    private final ListaEnlazada<String> meGustaDe = new ListaEnlazada<>();
 
     public Publicacion(String autor, String descripcion, byte[] imagen, String formato) {
-        this(autor, descripcion, imagen, formato, "", LocalDateTime.now(), 0);
+        this(autor, descripcion, imagen, formato, "", LocalDateTime.now());
     }
 
     public Publicacion(String autor, String descripcion, byte[] imagen, String formato,
-                       String carpetaPersonal, LocalDateTime fecha, int meGusta) {
+                       String carpetaPersonal, LocalDateTime fecha) {
         this.autor = autor;
         this.descripcion = descripcion;
         this.imagen = imagen;
         this.formato = formato;
         this.carpetaPersonal = carpetaPersonal;
         this.fecha = fecha;
-        this.meGusta = meGusta;
     }
 
     public String getAutor() {
@@ -64,11 +63,24 @@ public class Publicacion implements Serializable {
     }
 
     public int getMeGusta() {
-        return meGusta;
+        return meGustaDe.tamano();
     }
 
-    public void setMeGusta(int meGusta) {
-        this.meGusta = Math.max(0, meGusta);
+    public boolean leGustaA(String username) {
+        return meGustaDe.buscar(nombre -> nombre.equalsIgnoreCase(username)) != null;
+    }
+
+    public void marcarMeGusta(String username, boolean marcado) {
+        boolean yaEsta = leGustaA(username);
+        if (marcado && !yaEsta) {
+            meGustaDe.agregar(username);
+        } else if (!marcado && yaEsta) {
+            meGustaDe.eliminar(meGustaDe.buscar(nombre -> nombre.equalsIgnoreCase(username)));
+        }
+    }
+
+    public boolean esLaMisma(Publicacion otra) {
+        return otra != null && otra.getAutor().equalsIgnoreCase(autor) && otra.getFecha().equals(fecha);
     }
 
     public ListaEnlazada<String> etiquetas(char marca) {

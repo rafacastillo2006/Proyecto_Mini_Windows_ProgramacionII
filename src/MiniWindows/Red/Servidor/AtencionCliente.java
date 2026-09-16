@@ -66,7 +66,8 @@ public class AtencionCliente implements Runnable {
             case "PUBLICACIONES" -> servicio.publicacionesDe(texto(parametros, 0));
             case "MENCIONES" -> servicio.menciones(texto(parametros, 0));
             case "ME_GUSTA" -> {
-                servicio.darMeGusta((Publicacion) parametros[0], (Boolean) parametros[1]);
+                servicio.darMeGusta((Publicacion) parametros[0], texto(parametros, 1),
+                        (Boolean) parametros[2]);
                 yield Boolean.TRUE;
             }
             case "SEGUIR" -> {

@@ -79,12 +79,13 @@ public class GestorLineaTiempo {
         return encontradas;
     }
 
-    public void darMeGusta(Publicacion publicacion, boolean marcado) throws MiniWindowsException {
+    public void darMeGusta(Publicacion publicacion, String username, boolean marcado)
+            throws MiniWindowsException {
         ListaEnlazada<Publicacion> propias = publicacionesDe(publicacion.getAutor());
         for (Publicacion guardada : propias) {
-            if (guardada.getFecha().equals(publicacion.getFecha())) {
-                guardada.setMeGusta(guardada.getMeGusta() + (marcado ? 1 : -1));
-                publicacion.setMeGusta(guardada.getMeGusta());
+            if (guardada.esLaMisma(publicacion)) {
+                guardada.marcarMeGusta(username, marcado);
+                publicacion.marcarMeGusta(username, marcado);
                 AlmacenInsta.escribir(Rutas.getInsta(publicacion.getAutor()), propias);
                 return;
             }
@@ -92,8 +93,7 @@ public class GestorLineaTiempo {
     }
 
     private boolean yaEsta(ListaEnlazada<Publicacion> lista, Publicacion candidata) {
-        return lista.buscar(publicacion -> publicacion.getAutor().equalsIgnoreCase(candidata.getAutor())
-                && publicacion.getFecha().equals(candidata.getFecha())) != null;
+        return lista.buscar(candidata::esLaMisma) != null;
     }
 
     private String normalizar(String hashtag) {

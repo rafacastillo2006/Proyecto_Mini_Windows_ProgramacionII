@@ -59,7 +59,7 @@ public class SesionInsta {
         try {
             GestorBinario.guardar(Rutas.getSesiones(), restantes);
         } catch (MiniWindowsException error) {
-            System.err.println("No se pudo recordar la sesion de INSTA+: " + error.getMessage());
+            System.err.println("No se pudo recordar la sesión de INSTA+: " + error.getMessage());
         }
     }
 

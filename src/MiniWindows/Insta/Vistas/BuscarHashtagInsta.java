@@ -21,7 +21,7 @@ public class BuscarHashtagInsta extends VBox {
         setPadding(new Insets(18));
         setSpacing(12);
         setAlignment(Pos.TOP_CENTER);
-        setStyle("-fx-background-color: " + EstilosInsta.FONDO + ";");
+        setStyle(EstilosInsta.PAGINA);
 
         campo.setPromptText("Escribe un hashtag, por ejemplo #viajes");
         campo.setStyle(EstilosInsta.CAMPO);
@@ -54,7 +54,7 @@ public class BuscarHashtagInsta extends VBox {
             resultados.getChildren().add(new TarjetaPublicacion(ventana, publicacion));
         }
         if (resultados.getChildren().isEmpty()) {
-            resultados.getChildren().add(EstilosInsta.leyenda("Ninguna publicacion con ese hashtag."));
+            resultados.getChildren().add(EstilosInsta.leyenda("Ninguna publicación con ese hashtag."));
         }
     }
 }

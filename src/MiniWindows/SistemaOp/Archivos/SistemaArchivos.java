@@ -88,7 +88,12 @@ public class SistemaArchivos {
     }
 
     public boolean existeCarpeta(RutaVirtual ruta) {
-        return Files.isDirectory(carpetaFisica(ruta));
+        return !esReservada(ruta) && Files.isDirectory(carpetaFisica(ruta));
+    }
+
+    public boolean esReservada(RutaVirtual ruta) {
+        return !ruta.esRaiz()
+                && NOMBRES_RESERVADOS.contains(ruta.segmentos().get(0).toLowerCase(Locale.ROOT));
     }
 
     private void exigirCarpeta(RutaVirtual ruta) throws OperacionArchivoException {
@@ -115,7 +120,7 @@ public class SistemaArchivos {
     public ListaEnlazada<NodoArchivo> listar(RutaVirtual carpeta) throws OperacionArchivoException {
         ListaEnlazada<NodoArchivo> contenido = new ListaEnlazada<>();
         Path fisica = carpetaFisica(carpeta);
-        if (!Files.isDirectory(fisica)) {
+        if (esReservada(carpeta) || !Files.isDirectory(fisica)) {
             throw new OperacionArchivoException("La carpeta " + carpeta.texto() + " no existe");
         }
         try (DirectoryStream<Path> entradas = Files.newDirectoryStream(fisica)) {

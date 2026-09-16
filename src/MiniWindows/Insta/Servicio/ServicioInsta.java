@@ -28,7 +28,7 @@ public interface ServicioInsta {
 
     ListaEnlazada<Publicacion> menciones(String username);
 
-    void darMeGusta(Publicacion publicacion, boolean marcado) throws MiniWindowsException;
+    void darMeGusta(Publicacion publicacion, String username, boolean marcado) throws MiniWindowsException;
 
     void seguir(String origen, String destino) throws MiniWindowsException;
 

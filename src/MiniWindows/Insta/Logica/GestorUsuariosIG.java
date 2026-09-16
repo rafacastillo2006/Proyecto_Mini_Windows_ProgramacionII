@@ -33,7 +33,7 @@ public class GestorUsuariosIG {
             return null;
         }
         if (!usuario.estaActiva()) {
-            throw new CuentaDesactivadaException("La cuenta @" + usuario.getUsername() + " esta desactivada.");
+            throw new CuentaDesactivadaException("La cuenta @" + usuario.getUsername() + " está desactivada.");
         }
         return usuario;
     }

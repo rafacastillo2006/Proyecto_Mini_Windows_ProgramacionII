@@ -102,6 +102,7 @@ public class BarraTareas extends StackPane {
 
     private Button botonDeVentana(VentanaInterna ventana) {
         Button boton = new Button(Nombres.recortar(ventana.getAplicacion().titulo(), 18));
+        boton.setMnemonicParsing(false);
         boton.setGraphic(Iconos.imagen(ventana.getAplicacion().icono(), 16));
         boton.setGraphicTextGap(8);
         boton.setPrefHeight(38);
@@ -149,6 +150,7 @@ public class BarraTareas extends StackPane {
 
     private Button botonDeInicio() {
         Button boton = new Button();
+        boton.setMnemonicParsing(false);
         boton.setGraphic(Iconos.imagen("inicio", 28));
         boton.setTooltip(new Tooltip("Inicio"));
         boton.setMinSize(44, 40);
@@ -160,6 +162,7 @@ public class BarraTareas extends StackPane {
 
     private Button botonCuadrado(String icono, String ayuda, Color color) {
         Button boton = new Button();
+        boton.setMnemonicParsing(false);
         boton.setGraphic(Iconos.crear(icono, 18, color));
         boton.setTooltip(new Tooltip(ayuda));
         boton.setMinSize(40, 38);

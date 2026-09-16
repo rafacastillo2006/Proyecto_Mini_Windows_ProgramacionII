@@ -9,56 +9,47 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.StackPane;
 
-public class LoginInsta extends VBox {
+public class LoginInsta extends StackPane {
 
     private final VentanaInsta ventana;
-    private final TextField usuario = new TextField();
+    private final TextField usuario = EstilosInsta.campo("Nombre de usuario");
     private final CampoContrasena clave = new CampoContrasena("Contraseña", EstilosInsta.CAMPO);
     private final Label aviso = EstilosInsta.error("");
     private final HBox reintento = new HBox(8);
 
     public LoginInsta(VentanaInsta ventana) {
         this.ventana = ventana;
+        setStyle(EstilosInsta.PAGINA);
 
-        setAlignment(Pos.CENTER);
-        setPadding(new Insets(24));
-        setStyle(EstilosInsta.DEGRADADO);
-
-        usuario.setPromptText("Nombre de usuario");
-        usuario.setStyle(EstilosInsta.CAMPO);
         usuario.setOnAction(evento -> clave.pedirFoco());
         clave.alConfirmar(evento -> entrar());
-        aviso.setMinHeight(30);
+        aviso.setMinHeight(16);
+        aviso.setAlignment(Pos.CENTER);
+        aviso.setMaxWidth(Double.MAX_VALUE);
 
         reintento.setAlignment(Pos.CENTER);
-        reintento.setVisible(false);
-        reintento.setManaged(false);
+        mostrarOpciones(false);
         Button reintentar = EstilosInsta.botonSuave("Reintentar");
         reintentar.setOnAction(evento -> prepararReintento());
-        Button crear = EstilosInsta.botonPrincipal("Crear una cuenta");
-        crear.setMaxWidth(160);
+        Button crear = EstilosInsta.botonSuave("Crear una cuenta");
         crear.setOnAction(evento -> ventana.mostrarRegistro());
         reintento.getChildren().addAll(reintentar, crear);
 
-        VBox tarjeta = new VBox(12, EstilosInsta.titulo("INSTA+", 30),
-                EstilosInsta.leyenda("Entra con tu cuenta de INSTA+"),
-                usuario, clave, botonEntrar(), aviso, reintento, pieDeRegistro());
-        tarjeta.setAlignment(Pos.CENTER);
-        tarjeta.setPadding(new Insets(28, 26, 22, 26));
-        tarjeta.setMaxWidth(340);
-        tarjeta.setStyle(EstilosInsta.TARJETA);
+        Button entrar = EstilosInsta.botonPrincipal("Iniciar sesión");
+        entrar.setOnAction(evento -> entrar());
 
-        getChildren().add(tarjeta);
-    }
+        Label marca = (Label) EstilosInsta.marca(30);
+        marca.setPadding(new Insets(4, 0, 12, 0));
 
-    private Button botonEntrar() {
-        Button boton = EstilosInsta.botonPrincipal("Iniciar sesión");
-        boton.setOnAction(evento -> entrar());
-        return boton;
+        ScrollPane marco = Portada.marco(
+                Portada.tarjeta(10, marca, usuario, clave, entrar, aviso, reintento),
+                Portada.banda(pieDeRegistro()));
+        getChildren().add(marco);
     }
 
     private HBox pieDeRegistro() {

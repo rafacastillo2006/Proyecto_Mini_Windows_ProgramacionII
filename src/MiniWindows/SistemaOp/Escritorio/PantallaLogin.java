@@ -65,6 +65,7 @@ public class PantallaLogin extends StackPane {
         campoContrasena.alConfirmar(evento -> intentarIngreso());
 
         Button entrar = new Button("Entrar");
+        entrar.setMnemonicParsing(false);
         entrar.setPrefWidth(ANCHO_CAMPO);
         entrar.setOnAction(evento -> intentarIngreso());
         String base = "-fx-background-color: rgba(255,255,255,0.92); -fx-background-radius: 6; "
@@ -94,6 +95,7 @@ public class PantallaLogin extends StackPane {
 
     private Button botonApagar(Runnable alSalir) {
         Button apagar = new Button("Apagar");
+        apagar.setMnemonicParsing(false);
         apagar.setGraphic(Iconos.crear(Iconos.APAGAR, 16, Color.WHITE));
         apagar.setGraphicTextGap(8);
         apagar.setOnAction(evento -> alSalir.run());

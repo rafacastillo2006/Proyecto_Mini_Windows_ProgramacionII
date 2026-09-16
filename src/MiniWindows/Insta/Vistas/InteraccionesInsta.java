@@ -24,7 +24,7 @@ public class InteraccionesInsta extends ScrollPane {
                 "Publicaciones de otras cuentas donde te mencionaron con @" + yo));
 
         if (menciones.estaVacia()) {
-            columna.getChildren().add(EstilosInsta.leyenda("Todavia nadie te ha mencionado."));
+            columna.getChildren().add(EstilosInsta.leyenda("Todavía nadie te ha mencionado."));
         }
         for (Publicacion publicacion : menciones) {
             columna.getChildren().add(new TarjetaPublicacion(ventana, publicacion));
