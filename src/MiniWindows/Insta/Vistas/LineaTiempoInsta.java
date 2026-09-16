@@ -6,6 +6,7 @@ import MiniWindows.Insta.EstilosInsta;
 import MiniWindows.Insta.VentanaInsta;
 import MiniWindows.Modelo.Publicacion;
 import MiniWindows.Modelo.UsuarioInsta;
+import MiniWindows.Red.EventoInsta;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -33,6 +34,17 @@ public class LineaTiempoInsta extends ScrollPane {
                 + EstilosInsta.FONDO + "; -fx-border-color: transparent;");
 
         reconstruir();
+        ventana.alRecibirEvento(this::atender);
+    }
+
+    private void atender(EventoInsta evento) {
+        if (ventana.getContexto().getUsuarioActual().equalsIgnoreCase(evento.actor())) {
+            return;
+        }
+        if (evento.es(EventoInsta.PUBLICACION) || evento.es(EventoInsta.SEGUIR)
+                || evento.es(EventoInsta.DEJAR_DE_SEGUIR)) {
+            reconstruir();
+        }
     }
 
     private void reconstruir() {
@@ -65,8 +77,7 @@ public class LineaTiempoInsta extends ScrollPane {
         titulo.setPadding(new Insets(0, 0, 2, 10));
 
         VBox panel = new VBox(2, titulo);
-        panel.setMaxWidth(440);
-        panel.setMinWidth(440);
+        panel.setMaxWidth(TarjetaPublicacion.ANCHO_MAXIMO);
         panel.setPadding(new Insets(12, 4, 8, 4));
         panel.setStyle(EstilosInsta.TARJETA);
 

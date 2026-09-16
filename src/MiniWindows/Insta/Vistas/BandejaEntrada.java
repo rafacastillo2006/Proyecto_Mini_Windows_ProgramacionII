@@ -3,7 +3,7 @@ package MiniWindows.Insta.Vistas;
 import MiniWindows.Estructuras.ListaEnlazada;
 import MiniWindows.Excepciones.MiniWindowsException;
 import MiniWindows.Insta.EstilosInsta;
-import MiniWindows.Insta.Hilos.AvisoDeMensajes;
+import MiniWindows.Red.EventoInsta;
 import MiniWindows.Insta.Imagen.Sticker;
 import MiniWindows.Insta.VentanaInsta;
 import MiniWindows.Modelo.Mensaje;
@@ -39,7 +39,6 @@ public class BandejaEntrada extends BorderPane {
     private final FlowPane galeriaStickers = new FlowPane(8, 8);
     private final ScrollPane marco = new ScrollPane(mensajes);
 
-    private AvisoDeMensajes vigilante;
     private String conversando;
 
     public BandejaEntrada(VentanaInsta ventana, String contactoInicial) {
@@ -310,23 +309,21 @@ public class BandejaEntrada extends BorderPane {
     }
 
     private void vigilar() {
-        sceneProperty().addListener((observable, anterior, actual) -> {
-            if (actual == null) {
-                if (vigilante != null) {
-                    vigilante.detener();
-                    vigilante = null;
-                }
-            } else if (vigilante == null) {
-                vigilante = ventana.getContexto().crearAvisos(this::avisar);
-                vigilante.iniciar();
-            }
-        });
+        ventana.alRecibirEvento(this::atender);
     }
 
-    private void avisar(Mensaje mensaje) {
-        aviso.setText("Nuevo mensaje de @" + mensaje.getEmisor());
+    private void atender(EventoInsta evento) {
+        if (!evento.es(EventoInsta.MENSAJE) || evento.mensaje() == null) {
+            return;
+        }
+        Mensaje mensaje = evento.mensaje();
+        String yo = ventana.getContexto().getUsuarioActual();
+        if (!mensaje.getEmisor().equalsIgnoreCase(yo)) {
+            aviso.setText("Nuevo mensaje de @" + mensaje.getEmisor());
+        }
         cargarContactos();
-        if (mensaje.getEmisor().equalsIgnoreCase(conversando)) {
+        if (mensaje.getEmisor().equalsIgnoreCase(conversando)
+                || mensaje.getReceptor().equalsIgnoreCase(conversando)) {
             abrirConversacion(conversando);
         }
     }

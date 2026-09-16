@@ -1,11 +1,11 @@
 package MiniWindows.Insta;
 
-import MiniWindows.Insta.Hilos.AvisoDeMensajes;
+import MiniWindows.Insta.Hilos.CanalAvisos;
 import MiniWindows.Insta.Hilos.AvisosRemotos;
 import MiniWindows.Insta.Hilos.Notificaciones;
 import MiniWindows.Insta.Servicio.ServicioInsta;
 import MiniWindows.Insta.Servicio.ServicioRemoto;
-import MiniWindows.Modelo.Mensaje;
+import MiniWindows.Red.EventoInsta;
 import MiniWindows.SistemaOp.Apps.ContextoApp;
 
 import java.util.function.Consumer;
@@ -42,7 +42,7 @@ public class ContextoInsta {
         return servicio instanceof ServicioRemoto remoto && !remoto.hayConexion();
     }
 
-    public AvisoDeMensajes crearAvisos(Consumer<Mensaje> alLlegar) {
+    public CanalAvisos crearAvisos(Consumer<EventoInsta> alLlegar) {
         if (servicio instanceof ServicioRemoto remoto) {
             return new AvisosRemotos(remoto.getHost(), remoto.getPuerto(), getUsuarioActual(), alLlegar);
         }

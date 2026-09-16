@@ -6,6 +6,7 @@ import MiniWindows.Insta.EstilosInsta;
 import MiniWindows.Insta.VentanaInsta;
 import MiniWindows.Modelo.Publicacion;
 import MiniWindows.Modelo.UsuarioInsta;
+import MiniWindows.Red.EventoInsta;
 import MiniWindows.SistemaOp.Escritorio.Iconos;
 import MiniWindows.Util.Fechas;
 import javafx.geometry.Insets;
@@ -55,8 +56,23 @@ public class MiPerfilInsta extends ScrollPane {
 
         setContent(columna);
         setFitToWidth(true);
+        ventana.alRecibirEvento(this::atender);
         setStyle("-fx-background: " + EstilosInsta.FONDO + "; -fx-background-color: "
                 + EstilosInsta.FONDO + "; -fx-border-color: transparent;");
+    }
+
+    private void atender(EventoInsta evento) {
+        if (perfil == null || esMio(evento) || !evento.tocaA(perfil.getUsername())) {
+            return;
+        }
+        if (evento.es(EventoInsta.PUBLICACION) || evento.es(EventoInsta.SEGUIR)
+                || evento.es(EventoInsta.DEJAR_DE_SEGUIR)) {
+            ventana.mostrarPerfilDe(perfil.getUsername());
+        }
+    }
+
+    private boolean esMio(EventoInsta evento) {
+        return ventana.getContexto().getUsuarioActual().equalsIgnoreCase(evento.actor());
     }
 
     private boolean esPropio() {
@@ -196,6 +212,16 @@ public class MiPerfilInsta extends ScrollPane {
     }
 
     private StackPane miniatura(Publicacion publicacion) {
+        return conApertura(marcoMiniatura(publicacion), publicacion);
+    }
+
+    private StackPane conApertura(StackPane marco, Publicacion publicacion) {
+        marco.setCursor(javafx.scene.Cursor.HAND);
+        marco.setOnMouseClicked(evento -> ventana.mostrarPublicacion(publicacion));
+        return marco;
+    }
+
+    private StackPane marcoMiniatura(Publicacion publicacion) {
         ImageView vista = new ImageView();
         vista.setFitWidth(LADO_MINIATURA);
         vista.setFitHeight(LADO_MINIATURA);

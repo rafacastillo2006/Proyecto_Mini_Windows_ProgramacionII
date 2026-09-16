@@ -4,6 +4,7 @@ import MiniWindows.SistemaOp.Archivos.NodoArchivo;
 import MiniWindows.SistemaOp.Archivos.SistemaArchivos;
 import MiniWindows.SistemaOp.Cuentas.ServicioCuentas;
 import MiniWindows.SistemaOp.Escritorio.AccionesArchivos;
+import MiniWindows.SistemaOp.Escritorio.CentroAvisos;
 import MiniWindows.SistemaOp.Escritorio.Dialogos;
 import MiniWindows.SistemaOp.Escritorio.GestorVentanas;
 import MiniWindows.SistemaOp.Nucleo.Sesion;
@@ -17,6 +18,8 @@ public class ContextoApp {
     private final GestorVentanas ventanas;
     private final RegistroAplicaciones aplicaciones;
     private final AccionesArchivos acciones;
+
+    private CentroAvisos avisos;
 
     public ContextoApp(Sesion sesion, SistemaArchivos archivos, ServicioCuentas cuentas,
                        GestorVentanas ventanas, RegistroAplicaciones aplicaciones, AccionesArchivos acciones) {
@@ -68,5 +71,15 @@ public class ContextoApp {
 
     public AccionesArchivos getAcciones() {
         return acciones;
+    }
+
+    public void usarCentroAvisos(CentroAvisos centro) {
+        this.avisos = centro;
+    }
+
+    public void avisar(String icono, String titulo, String detalle, Runnable alPulsar) {
+        if (avisos != null) {
+            avisos.mostrar(icono, titulo, detalle, alPulsar);
+        }
     }
 }

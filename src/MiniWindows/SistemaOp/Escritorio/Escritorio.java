@@ -20,6 +20,7 @@ public class Escritorio extends BorderPane {
 
     private final GestorVentanas gestor;
     private final MenuInicio menuInicio;
+    private final CentroAvisos avisos = new CentroAvisos();
 
     public Escritorio(SistemaOperativo sistema, Sesion sesion, Runnable alCerrarSesion, Runnable alApagar) {
         Pane capaVentanas = new Pane();
@@ -31,6 +32,8 @@ public class Escritorio extends BorderPane {
         ContextoApp contexto = new ContextoApp(sesion, sistema.getSistemaArchivos(),
                 sistema.getServicioCuentas(), gestor, registro, acciones);
         gestor.usarContexto(contexto);
+        contexto.usarCentroAvisos(avisos);
+        StackPane.setAlignment(avisos, Pos.TOP_RIGHT);
 
         ListaEnlazada<Aplicacion> disponibles = registro.disponiblesPara(sesion);
         menuInicio = new MenuInicio(disponibles, sesion, gestor, alCerrarSesion, alApagar);
@@ -43,7 +46,7 @@ public class Escritorio extends BorderPane {
         fondo.setOnContextMenuRequested(evento ->
                 menuEscritorio.show(fondo, evento.getScreenX(), evento.getScreenY()));
 
-        StackPane area = new StackPane(fondo, iconos, capaVentanas, menuInicio);
+        StackPane area = new StackPane(fondo, iconos, capaVentanas, menuInicio, avisos);
         BarraTareas barraTareas = new BarraTareas(sesion, gestor, menuInicio::alternar, alCerrarSesion);
 
         addEventFilter(MouseEvent.MOUSE_PRESSED, evento -> {
@@ -60,6 +63,10 @@ public class Escritorio extends BorderPane {
 
     public GestorVentanas getGestorVentanas() {
         return gestor;
+    }
+
+    public CentroAvisos getCentroAvisos() {
+        return avisos;
     }
 
     private boolean perteneceA(Node contenedor, EventTarget objetivo) {

@@ -6,6 +6,7 @@ import MiniWindows.Insta.Imagen.ProcesadorImagen;
 import MiniWindows.Insta.VentanaInsta;
 import MiniWindows.Modelo.Publicacion;
 import MiniWindows.Modelo.UsuarioInsta;
+import MiniWindows.Red.EventoInsta;
 import MiniWindows.SistemaOp.Escritorio.Iconos;
 import MiniWindows.Util.Fechas;
 import javafx.geometry.Insets;
@@ -25,7 +26,7 @@ import java.util.Locale;
 
 public class TarjetaPublicacion extends VBox {
 
-    private static final double ANCHO = 440;
+    public static final double ANCHO_MAXIMO = 440;
 
     private final VentanaInsta ventana;
     private final Publicacion publicacion;
@@ -34,21 +35,25 @@ public class TarjetaPublicacion extends VBox {
     private final Button meGusta;
 
     private boolean marcado;
+    private int totalMeGusta;
 
     public TarjetaPublicacion(VentanaInsta ventana, Publicacion publicacion) {
         this.ventana = ventana;
         this.publicacion = publicacion;
         this.marcado = publicacion.leGustaA(ventana.getContexto().getUsuarioActual());
+        this.totalMeGusta = publicacion.getMeGusta();
         this.meGusta = EstilosInsta.botonIcono(Iconos.CORAZON, "Me gusta", 21);
 
         setSpacing(0);
-        setMaxWidth(ANCHO);
-        setMinWidth(ANCHO);
+        setMinWidth(0);
+        setPrefWidth(ANCHO_MAXIMO);
+        setMaxWidth(ANCHO_MAXIMO);
         setStyle(EstilosInsta.TARJETA);
 
         getChildren().addAll(cabecera(), imagen(), acciones(), pie());
         pintarMeGusta();
         actualizarContador();
+        ventana.alRecibirEvento(this::atender);
     }
 
     private HBox cabecera() {
@@ -65,23 +70,24 @@ public class TarjetaPublicacion extends VBox {
     }
 
     private StackPane imagen() {
-        double alto = ANCHO / ProcesadorImagen.proporcionDe(publicacion.getFormato());
+        double proporcion = ProcesadorImagen.proporcionDe(publicacion.getFormato());
         ImageView vista = new ImageView();
-        vista.setFitWidth(ANCHO);
-        vista.setFitHeight(alto);
         vista.setPreserveRatio(false);
         vista.setSmooth(true);
 
         StackPane marco = new StackPane(vista);
-        marco.setPrefSize(ANCHO, alto);
-        marco.setMinHeight(alto);
+        marco.setMinSize(0, 0);
+        marco.setPrefWidth(ANCHO_MAXIMO);
         marco.setStyle("-fx-background-color: " + EstilosInsta.SUAVE + "; "
                 + "-fx-border-color: " + EstilosInsta.BORDE + " transparent " + EstilosInsta.BORDE
                 + " transparent; -fx-border-width: 1 0 1 0;");
         marco.setVisible(publicacion.tieneImagen());
         marco.setManaged(publicacion.tieneImagen());
+        vista.fitWidthProperty().bind(widthProperty());
+        vista.fitHeightProperty().bind(widthProperty().divide(proporcion));
+        marco.prefHeightProperty().bind(widthProperty().divide(proporcion));
         if (publicacion.tieneImagen()) {
-            ventana.getCargador().cargar(publicacion.getImagen(), ANCHO, vista::setImage);
+            ventana.getCargador().cargar(publicacion.getImagen(), ANCHO_MAXIMO, vista::setImage);
         }
         return marco;
     }
@@ -104,7 +110,7 @@ public class TarjetaPublicacion extends VBox {
 
     private VBox pie() {
         TextFlow descripcion = new TextFlow();
-        descripcion.setMaxWidth(ANCHO - 28);
+        descripcion.maxWidthProperty().bind(widthProperty().subtract(28));
         descripcion.setLineSpacing(1);
         descripcion.getChildren().add(trozo(publicacion.getAutor() + " escribió: ", true, null));
         descripcion.getChildren().add(trozo("\"", false, null));
@@ -165,16 +171,33 @@ public class TarjetaPublicacion extends VBox {
     }
 
     private void alternarMeGusta() {
+        String yo = ventana.getContexto().getUsuarioActual();
         try {
-            ventana.getContexto().getServicio().darMeGusta(publicacion,
-                    ventana.getContexto().getUsuarioActual(), !marcado);
-            marcado = !marcado;
+            ventana.getContexto().getServicio().darMeGusta(publicacion, yo, !marcado);
             aviso.setText("");
-            pintarMeGusta();
-            actualizarContador();
+            releer();
+            ventana.publicarEvento(EventoInsta.meGusta(yo, publicacion.getAutor(), publicacion.clave()));
         } catch (MiniWindowsException error) {
             aviso.setText(error.getMessage());
         }
+    }
+
+    private void atender(EventoInsta evento) {
+        if (evento.es(EventoInsta.ME_GUSTA) && publicacion.clave().equals(evento.referencia())) {
+            releer();
+        }
+    }
+
+    public void releer() {
+        Publicacion actual = ventana.getContexto().getServicio()
+                .publicacionesDe(publicacion.getAutor()).buscar(publicacion::esLaMisma);
+        if (actual == null) {
+            return;
+        }
+        totalMeGusta = actual.getMeGusta();
+        marcado = actual.leGustaA(ventana.getContexto().getUsuarioActual());
+        pintarMeGusta();
+        actualizarContador();
     }
 
     private void pintarMeGusta() {
@@ -183,7 +206,6 @@ public class TarjetaPublicacion extends VBox {
     }
 
     private void actualizarContador() {
-        int total = publicacion.getMeGusta();
-        contador.setText(total == 1 ? "1 me gusta" : total + " me gusta");
+        contador.setText(totalMeGusta == 1 ? "1 me gusta" : totalMeGusta + " me gusta");
     }
 }

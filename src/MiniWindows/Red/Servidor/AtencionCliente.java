@@ -4,6 +4,7 @@ import MiniWindows.Insta.Servicio.ServicioInsta;
 import MiniWindows.Modelo.Mensaje;
 import MiniWindows.Modelo.Publicacion;
 import MiniWindows.Modelo.UsuarioInsta;
+import MiniWindows.Red.EventoInsta;
 import MiniWindows.Red.RespuestaInsta;
 
 import java.io.ObjectInputStream;
@@ -84,23 +85,31 @@ public class AtencionCliente implements Runnable {
                 yield Boolean.TRUE;
             }
             case "PUBLICAR" -> {
-                servicio.publicar((Publicacion) parametros[0]);
+                Publicacion nueva = (Publicacion) parametros[0];
+                servicio.publicar(nueva);
+                avisos.difundir(EventoInsta.publicacion(nueva.getAutor(), nueva.clave()));
                 yield Boolean.TRUE;
             }
             case "LINEA_TIEMPO" -> servicio.lineaDeTiempo(texto(parametros, 0));
             case "PUBLICACIONES" -> servicio.publicacionesDe(texto(parametros, 0));
             case "MENCIONES" -> servicio.menciones(texto(parametros, 0));
             case "ME_GUSTA" -> {
-                servicio.darMeGusta((Publicacion) parametros[0], texto(parametros, 1),
-                        (Boolean) parametros[2]);
+                Publicacion publicacion = (Publicacion) parametros[0];
+                servicio.darMeGusta(publicacion, texto(parametros, 1), (Boolean) parametros[2]);
+                avisos.difundir(EventoInsta.meGusta(texto(parametros, 1), publicacion.getAutor(),
+                        publicacion.clave()));
                 yield Boolean.TRUE;
             }
             case "SEGUIR" -> {
                 servicio.seguir(texto(parametros, 0), texto(parametros, 1));
+                avisos.difundir(EventoInsta.seguimiento(EventoInsta.SEGUIR,
+                        texto(parametros, 0), texto(parametros, 1)));
                 yield Boolean.TRUE;
             }
             case "DEJAR_DE_SEGUIR" -> {
                 servicio.dejarDeSeguir(texto(parametros, 0), texto(parametros, 1));
+                avisos.difundir(EventoInsta.seguimiento(EventoInsta.DEJAR_DE_SEGUIR,
+                        texto(parametros, 0), texto(parametros, 1)));
                 yield Boolean.TRUE;
             }
             case "SIGUE" -> servicio.sigue(texto(parametros, 0), texto(parametros, 1));
@@ -112,7 +121,7 @@ public class AtencionCliente implements Runnable {
             case "ENVIAR_MENSAJE" -> {
                 Mensaje mensaje = (Mensaje) parametros[0];
                 servicio.enviarMensaje(mensaje);
-                avisos.avisar(mensaje.getReceptor(), mensaje);
+                avisos.avisar(mensaje.getReceptor(), EventoInsta.deMensaje(mensaje));
                 yield Boolean.TRUE;
             }
             case "BANDEJA" -> servicio.bandejaDe(texto(parametros, 0));

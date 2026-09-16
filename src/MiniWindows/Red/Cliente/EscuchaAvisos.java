@@ -1,6 +1,6 @@
 package MiniWindows.Red.Cliente;
 
-import MiniWindows.Modelo.Mensaje;
+import MiniWindows.Red.EventoInsta;
 import MiniWindows.Red.RespuestaInsta;
 
 import java.io.ObjectInputStream;
@@ -8,7 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.function.Consumer;
 
-public class EscuchaMensajes extends Thread {
+public class EscuchaAvisos extends Thread {
 
     public static final String NOMBRE_HILO = "INSTA-Escucha";
 
@@ -17,12 +17,12 @@ public class EscuchaMensajes extends Thread {
     private final String host;
     private final int puerto;
     private final String username;
-    private final Consumer<Mensaje> alLlegar;
+    private final Consumer<EventoInsta> alLlegar;
 
     private volatile boolean activo = true;
     private volatile Socket conexion;
 
-    public EscuchaMensajes(String host, int puerto, String username, Consumer<Mensaje> alLlegar) {
+    public EscuchaAvisos(String host, int puerto, String username, Consumer<EventoInsta> alLlegar) {
         super(NOMBRE_HILO);
         this.host = host;
         this.puerto = puerto;
@@ -45,8 +45,8 @@ public class EscuchaMensajes extends Thread {
                 while (activo) {
                     Object aviso = entrada.readObject();
                     if (aviso instanceof RespuestaInsta respuesta
-                            && respuesta.valor() instanceof Mensaje mensaje) {
-                        alLlegar.accept(mensaje);
+                            && respuesta.valor() instanceof EventoInsta evento) {
+                        alLlegar.accept(evento);
                     }
                 }
             } catch (Exception cortado) {

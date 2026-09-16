@@ -386,12 +386,24 @@ public class PanelExplorador extends BorderPane {
     }
 
     private void aplicarCambioExterno(RutaVirtual carpeta) {
-        ItemCarpeta item = itemDe(carpeta, false);
-        if (item != null) {
-            item.recargar();
-        }
+        recargarSinNavegar(itemDe(carpeta, false));
         if (carpeta.equals(carpetaActual)) {
             recargarContenido();
+        }
+    }
+
+    private void recargarSinNavegar(ItemCarpeta item) {
+        if (item == null) {
+            return;
+        }
+        sincronizandoArbol = true;
+        try {
+            item.recargar();
+        } finally {
+            sincronizandoArbol = false;
+        }
+        if (carpetaActual != null) {
+            seleccionarEnArbol(carpetaActual);
         }
     }
 
@@ -405,10 +417,7 @@ public class PanelExplorador extends BorderPane {
     }
 
     private void recargarEnArbol(RutaVirtual carpeta) {
-        ItemCarpeta item = itemDe(carpeta, true);
-        if (item != null) {
-            item.recargar();
-        }
+        recargarSinNavegar(itemDe(carpeta, true));
     }
 
     private void abrir(NodoArchivo nodo) {

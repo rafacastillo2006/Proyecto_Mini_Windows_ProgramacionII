@@ -79,6 +79,10 @@ public class Publicacion implements Serializable {
         }
     }
 
+    public String clave() {
+        return getAutor() + "|" + getFecha();
+    }
+
     public boolean esLaMisma(Publicacion otra) {
         return otra != null && otra.getAutor().equalsIgnoreCase(autor) && otra.getFecha().equals(fecha);
     }

@@ -1,6 +1,6 @@
 package MiniWindows.Red.Servidor;
 
-import MiniWindows.Modelo.Mensaje;
+import MiniWindows.Red.EventoInsta;
 import MiniWindows.Red.RespuestaInsta;
 
 import java.io.IOException;
@@ -29,15 +29,24 @@ public class AvisosInsta {
         }
     }
 
-    public void avisar(String username, Mensaje mensaje) {
-        List<ObjectOutputStream> lista = oyentes.get(clave(username));
+    public void avisar(String username, EventoInsta evento) {
+        enviar(oyentes.get(clave(username)), evento);
+    }
+
+    public void difundir(EventoInsta evento) {
+        for (List<ObjectOutputStream> lista : oyentes.values()) {
+            enviar(lista, evento);
+        }
+    }
+
+    private void enviar(List<ObjectOutputStream> lista, EventoInsta evento) {
         if (lista == null) {
             return;
         }
         for (ObjectOutputStream salida : lista) {
             try {
                 synchronized (salida) {
-                    salida.writeObject(RespuestaInsta.ok(mensaje));
+                    salida.writeObject(RespuestaInsta.ok(evento));
                     salida.flush();
                     salida.reset();
                 }

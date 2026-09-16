@@ -1,6 +1,6 @@
 package MiniWindows.Insta.Hilos;
 
-public interface AvisoDeMensajes {
+public interface CanalAvisos {
 
     void iniciar();
 

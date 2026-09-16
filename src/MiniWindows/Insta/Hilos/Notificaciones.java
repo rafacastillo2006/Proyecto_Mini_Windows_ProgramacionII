@@ -3,11 +3,12 @@ package MiniWindows.Insta.Hilos;
 import MiniWindows.Estructuras.ListaEnlazada;
 import MiniWindows.Insta.Servicio.ServicioInsta;
 import MiniWindows.Modelo.Mensaje;
+import MiniWindows.Red.EventoInsta;
 import javafx.application.Platform;
 
 import java.util.function.Consumer;
 
-public class Notificaciones extends Thread implements AvisoDeMensajes {
+public class Notificaciones extends Thread implements CanalAvisos {
 
     public static final String NOMBRE_HILO = "MiniWindows-InstaAvisos";
 
@@ -15,12 +16,12 @@ public class Notificaciones extends Thread implements AvisoDeMensajes {
 
     private final ServicioInsta servicio;
     private final String username;
-    private final Consumer<Mensaje> alLlegar;
+    private final Consumer<EventoInsta> alLlegar;
 
     private volatile boolean activo = true;
     private int mensajesVistos;
 
-    public Notificaciones(ServicioInsta servicio, String username, Consumer<Mensaje> alLlegar) {
+    public Notificaciones(ServicioInsta servicio, String username, Consumer<EventoInsta> alLlegar) {
         super(NOMBRE_HILO);
         this.servicio = servicio;
         this.username = username;
@@ -47,7 +48,7 @@ public class Notificaciones extends Thread implements AvisoDeMensajes {
             if (llegoAlgo) {
                 Mensaje ultimo = bandeja.ultimo();
                 if (!ultimo.getEmisor().equalsIgnoreCase(username)) {
-                    Platform.runLater(() -> alLlegar.accept(ultimo));
+                    Platform.runLater(() -> alLlegar.accept(EventoInsta.deMensaje(ultimo)));
                 }
             }
         }
