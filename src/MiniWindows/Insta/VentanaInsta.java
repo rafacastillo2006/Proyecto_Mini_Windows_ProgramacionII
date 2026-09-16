@@ -3,6 +3,7 @@ package MiniWindows.Insta;
 import MiniWindows.Insta.Hilos.CargaIMGS;
 import MiniWindows.Insta.Servicio.ServicioInsta;
 import MiniWindows.Insta.Servicio.ServicioLocal;
+import MiniWindows.Insta.Servicio.ServicioRemoto;
 import MiniWindows.Insta.Vistas.BandejaEntrada;
 import MiniWindows.Insta.Vistas.BuscarHashtagInsta;
 import MiniWindows.Insta.Vistas.BuscarInsta;
@@ -42,7 +43,8 @@ public class VentanaInsta extends BorderPane {
     private Button seleccionada;
 
     public VentanaInsta(ContextoApp contextoApp) {
-        ServicioInsta servicio = new ServicioLocal();
+        ServicioInsta remoto = ServicioRemoto.siHayServidor();
+        ServicioInsta servicio = remoto != null ? remoto : new ServicioLocal();
         InicializadorInsta.sembrarSiHaceFalta(servicio);
 
         String usuarioWindows = contextoApp.getSesion().getUsuario().getUsername();
@@ -60,6 +62,7 @@ public class VentanaInsta extends BorderPane {
         sceneProperty().addListener((observable, anterior, actual) -> {
             if (actual == null) {
                 cargador.detener();
+                contexto.getSesion().liberar();
             }
         });
     }
@@ -74,7 +77,7 @@ public class VentanaInsta extends BorderPane {
 
     private boolean reabrirSesionRecordada() {
         String recordada = contexto.getSesion().getCuentaRecordada();
-        if (recordada == null) {
+        if (recordada == null || SesionInsta.estaAbierta(recordada)) {
             return false;
         }
         UsuarioInsta usuario = contexto.getServicio().perfilDe(recordada);

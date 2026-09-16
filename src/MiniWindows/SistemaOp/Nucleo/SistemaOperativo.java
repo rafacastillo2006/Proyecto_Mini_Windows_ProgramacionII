@@ -13,8 +13,13 @@ import MiniWindows.SistemaOp.EditorTexto.AppEditorTexto;
 import MiniWindows.SistemaOp.Explorador.AppExplorador;
 import MiniWindows.SistemaOp.ReproductorMusica.AppReproductor;
 import MiniWindows.SistemaOp.VisorImagenes.AppVisorImagenes;
+import MiniWindows.Insta.Servicio.ServicioLocal;
+import MiniWindows.Red.Cliente.ClienteInsta;
+import MiniWindows.Red.Servidor.ServidorInsta;
+import MiniWindows.Util.InicializadorInsta;
 import MiniWindows.Util.Rutas;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class SistemaOperativo {
@@ -23,6 +28,8 @@ public class SistemaOperativo {
     private final RepositorioUsuarios repositorioUsuarios;
     private final ServicioCuentas servicioCuentas;
     private final RegistroAplicaciones aplicaciones = new RegistroAplicaciones();
+
+    private ServidorInsta servidorInsta;
 
     public SistemaOperativo() {
         this(RutasSistema.raizFisica());
@@ -39,6 +46,32 @@ public class SistemaOperativo {
         Rutas.usarRaiz(sistemaArchivos.getRaizFisica());
         servicioCuentas.inicializar();
         registrarAplicaciones();
+        InicializadorInsta.sembrarSiHaceFalta(new ServicioLocal());
+    }
+
+    public void encenderServidorInsta() {
+        if (servidorInsta != null) {
+            return;
+        }
+        ServidorInsta servidor = new ServidorInsta(ClienteInsta.PUERTO_POR_DEFECTO, new ServicioLocal());
+        try {
+            servidor.encender();
+            servidorInsta = servidor;
+        } catch (IOException ocupado) {
+            System.out.println("INSTA+ se conectara al servidor que ya escucha en el puerto "
+                    + ClienteInsta.PUERTO_POR_DEFECTO);
+        }
+    }
+
+    public void apagarServidorInsta() {
+        if (servidorInsta != null) {
+            servidorInsta.apagar();
+            servidorInsta = null;
+        }
+    }
+
+    public ServidorInsta getServidorInsta() {
+        return servidorInsta;
     }
 
     public SistemaArchivos getSistemaArchivos() {

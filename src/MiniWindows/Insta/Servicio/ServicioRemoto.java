@@ -12,10 +12,37 @@ import MiniWindows.Red.RespuestaInsta;
 
 public class ServicioRemoto implements ServicioInsta {
 
+    public static final String HOST_LOCAL = "localhost";
+
+    private final String host;
+    private final int puerto;
     private final ClienteInsta cliente;
 
     public ServicioRemoto(String host, int puerto) {
+        this.host = host;
+        this.puerto = puerto;
         this.cliente = new ClienteInsta(host, puerto);
+    }
+
+    public static ServicioRemoto siHayServidor() {
+        return siHayServidor(HOST_LOCAL, ClienteInsta.PUERTO_POR_DEFECTO);
+    }
+
+    public static ServicioRemoto siHayServidor(String host, int puerto) {
+        ServicioRemoto remoto = new ServicioRemoto(host, puerto);
+        return remoto.hayConexion() ? remoto : null;
+    }
+
+    public boolean hayConexion() {
+        return Boolean.TRUE.equals(cliente.pedir(Boolean.class, "PING"));
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public int getPuerto() {
+        return puerto;
     }
 
     @Override

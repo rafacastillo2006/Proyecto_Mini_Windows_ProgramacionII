@@ -12,12 +12,17 @@ import java.net.Socket;
 
 public class AtencionCliente implements Runnable {
 
+    public static final String ESCUCHAR = "ESCUCHAR";
+    public static final String PING = "PING";
+
     private final Socket cliente;
     private final ServicioInsta servicio;
+    private final AvisosInsta avisos;
 
-    public AtencionCliente(Socket cliente, ServicioInsta servicio) {
+    public AtencionCliente(Socket cliente, ServicioInsta servicio, AvisosInsta avisos) {
         this.cliente = cliente;
         this.servicio = servicio;
+        this.avisos = avisos;
     }
 
     @Override
@@ -27,10 +32,29 @@ public class AtencionCliente implements Runnable {
              ObjectOutputStream salida = new ObjectOutputStream(conexion.getOutputStream())) {
             String comando = entrada.readUTF();
             Object[] parametros = (Object[]) entrada.readObject();
+            if (ESCUCHAR.equals(comando)) {
+                escuchar(texto(parametros, 0), entrada, salida);
+                return;
+            }
             salida.writeObject(atender(comando, parametros));
             salida.flush();
         } catch (Exception error) {
             System.err.println("Error atendiendo a un cliente: " + error.getMessage());
+        }
+    }
+
+    private void escuchar(String username, ObjectInputStream entrada, ObjectOutputStream salida) {
+        avisos.registrar(username, salida);
+        try {
+            synchronized (salida) {
+                salida.writeObject(RespuestaInsta.ok(Boolean.TRUE));
+                salida.flush();
+            }
+            while (true) {
+                entrada.readObject();
+            }
+        } catch (Exception fin) {
+            avisos.quitar(username, salida);
         }
     }
 
@@ -44,6 +68,7 @@ public class AtencionCliente implements Runnable {
 
     private Object ejecutar(String comando, Object[] parametros) throws Exception {
         return switch (comando) {
+            case PING -> Boolean.TRUE;
             case "LOGIN" -> servicio.autenticar(texto(parametros, 0), texto(parametros, 1));
             case "REGISTRAR" -> {
                 servicio.registrar((UsuarioInsta) parametros[0]);
@@ -85,7 +110,9 @@ public class AtencionCliente implements Runnable {
             case "SUGERENCIAS" -> servicio.sugerencias(texto(parametros, 0), (Integer) parametros[1]);
             case "BUSCAR_HASHTAG" -> servicio.buscarHashtag(texto(parametros, 0));
             case "ENVIAR_MENSAJE" -> {
-                servicio.enviarMensaje((Mensaje) parametros[0]);
+                Mensaje mensaje = (Mensaje) parametros[0];
+                servicio.enviarMensaje(mensaje);
+                avisos.avisar(mensaje.getReceptor(), mensaje);
                 yield Boolean.TRUE;
             }
             case "BANDEJA" -> servicio.bandejaDe(texto(parametros, 0));

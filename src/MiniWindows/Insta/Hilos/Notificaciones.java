@@ -7,7 +7,7 @@ import javafx.application.Platform;
 
 import java.util.function.Consumer;
 
-public class Notificaciones extends Thread {
+public class Notificaciones extends Thread implements AvisoDeMensajes {
 
     public static final String NOMBRE_HILO = "MiniWindows-InstaAvisos";
 
@@ -53,6 +53,12 @@ public class Notificaciones extends Thread {
         }
     }
 
+    @Override
+    public void iniciar() {
+        start();
+    }
+
+    @Override
     public void detener() {
         activo = false;
         interrupt();

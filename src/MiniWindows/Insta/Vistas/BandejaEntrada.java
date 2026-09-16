@@ -3,7 +3,7 @@ package MiniWindows.Insta.Vistas;
 import MiniWindows.Estructuras.ListaEnlazada;
 import MiniWindows.Excepciones.MiniWindowsException;
 import MiniWindows.Insta.EstilosInsta;
-import MiniWindows.Insta.Hilos.Notificaciones;
+import MiniWindows.Insta.Hilos.AvisoDeMensajes;
 import MiniWindows.Insta.Imagen.Sticker;
 import MiniWindows.Insta.VentanaInsta;
 import MiniWindows.Modelo.Mensaje;
@@ -39,7 +39,7 @@ public class BandejaEntrada extends BorderPane {
     private final FlowPane galeriaStickers = new FlowPane(8, 8);
     private final ScrollPane marco = new ScrollPane(mensajes);
 
-    private Notificaciones vigilante;
+    private AvisoDeMensajes vigilante;
     private String conversando;
 
     public BandejaEntrada(VentanaInsta ventana, String contactoInicial) {
@@ -317,9 +317,8 @@ public class BandejaEntrada extends BorderPane {
                     vigilante = null;
                 }
             } else if (vigilante == null) {
-                vigilante = new Notificaciones(ventana.getContexto().getServicio(),
-                        ventana.getContexto().getUsuarioActual(), this::avisar);
-                vigilante.start();
+                vigilante = ventana.getContexto().crearAvisos(this::avisar);
+                vigilante.iniciar();
             }
         });
     }

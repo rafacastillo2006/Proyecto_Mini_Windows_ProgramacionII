@@ -16,6 +16,7 @@ public class ServidorInsta {
     private final int puerto;
     private final ServicioInsta servicio;
     private final AtomicInteger clientesAtendidos = new AtomicInteger();
+    private final AvisosInsta avisos = new AvisosInsta();
 
     private ServerSocket puerta;
     private Thread aceptador;
@@ -66,6 +67,10 @@ public class ServidorInsta {
         return clientesAtendidos.get();
     }
 
+    public int getOyentes() {
+        return avisos.cuantosEscuchan();
+    }
+
     public boolean estaEncendido() {
         return encendido;
     }
@@ -75,7 +80,7 @@ public class ServidorInsta {
             try {
                 Socket cliente = puerta.accept();
                 clientesAtendidos.incrementAndGet();
-                Thread atencion = new Thread(new AtencionCliente(cliente, servicio),
+                Thread atencion = new Thread(new AtencionCliente(cliente, servicio, avisos),
                         NOMBRE_HILO + "-" + clientesAtendidos.get());
                 atencion.setDaemon(true);
                 atencion.start();

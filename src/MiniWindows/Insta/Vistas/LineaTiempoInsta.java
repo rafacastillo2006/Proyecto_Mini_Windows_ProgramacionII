@@ -41,7 +41,12 @@ public class LineaTiempoInsta extends ScrollPane {
         ListaEnlazada<Publicacion> feed = ventana.getContexto().getServicio().lineaDeTiempo(yo);
 
         columna.getChildren().add(panelSugerencias());
-        if (feed.estaVacia()) {
+        if (feed.estaVacia() && ventana.getContexto().servidorCaido()) {
+            Label caido = EstilosInsta.error(
+                    "Se perdió la conexión con el servidor de INSTA+. Cierra y vuelve a abrir la app.");
+            caido.setPadding(new Insets(16, 0, 0, 0));
+            columna.getChildren().add(caido);
+        } else if (feed.estaVacia()) {
             Label vacio = EstilosInsta.leyenda("Todavía no hay publicaciones. Sigue algunas cuentas para empezar.");
             vacio.setPadding(new Insets(20, 0, 0, 0));
             columna.getChildren().add(vacio);

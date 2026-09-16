@@ -48,8 +48,10 @@ public class GestorBandejaEntrada {
     }
 
     public ListaEnlazada<String> contactosDe(String username) {
+        ListaEnlazada<Mensaje> bandeja = bandejaDe(username);
         ListaEnlazada<String> contactos = new ListaEnlazada<>();
-        for (Mensaje mensaje : bandejaDe(username)) {
+        for (int i = bandeja.tamano() - 1; i >= 0; i--) {
+            Mensaje mensaje = bandeja.obtener(i);
             String otro = mensaje.getEmisor().equalsIgnoreCase(username)
                     ? mensaje.getReceptor()
                     : mensaje.getEmisor();

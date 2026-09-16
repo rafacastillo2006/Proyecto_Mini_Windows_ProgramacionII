@@ -140,7 +140,8 @@ public class RegistrarseInsta extends StackPane {
                 username, contrasena, anios, avatar);
         try {
             ventana.getContexto().getServicio().registrar(nuevo);
-            ventana.getContexto().getSesion().abrir(nuevo);
+            UsuarioInsta creado = ventana.getContexto().getServicio().perfilDe(username);
+            ventana.getContexto().getSesion().abrir(creado != null ? creado : nuevo);
             ventana.mostrarSugerenciasIniciales();
         } catch (MiniWindowsException error) {
             aviso.setText(error.getMessage());

@@ -35,6 +35,7 @@ public class Launcher extends Application {
             reportarFalloDeArranque(error);
             return;
         }
+        sistema.encenderServidorInsta();
 
         mostrarLogin();
         escenario.show();
@@ -49,6 +50,7 @@ public class Launcher extends Application {
     }
 
     private void apagar() {
+        sistema.apagarServidorInsta();
         Platform.exit();
     }
 

@@ -35,7 +35,7 @@ public class AppInsta implements Aplicacion {
 
     @Override
     public boolean permiteVariasInstancias() {
-        return false;
+        return true;
     }
 
     @Override
