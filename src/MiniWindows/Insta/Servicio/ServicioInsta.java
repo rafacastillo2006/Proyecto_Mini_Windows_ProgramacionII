@@ -1,32 +1,70 @@
 package MiniWindows.Insta.Servicio;
 
 import MiniWindows.Estructuras.ListaEnlazada;
-import MiniWindows.Modelo.*;
-import MiniWindows.Excepciones.*;
+import MiniWindows.Excepciones.CuentaDesactivadaException;
+import MiniWindows.Excepciones.MiniWindowsException;
+import MiniWindows.Insta.Imagen.Sticker;
+import MiniWindows.Modelo.Mensaje;
+import MiniWindows.Modelo.Publicacion;
+import MiniWindows.Modelo.UsuarioInsta;
 
 public interface ServicioInsta {
 
-    UsuarioInsta autenticar(String username, String password) throws CuentaDesactivadaException;
+    UsuarioInsta autenticar(String username, String clave) throws CuentaDesactivadaException;
 
-    boolean registrarUsuario(UsuarioInsta usuario) throws UsernameDuplicadoException;
+    void registrar(UsuarioInsta usuario) throws MiniWindowsException;
 
-    void hacerPost(String username, String descripcion, String rutaImagen, String tipoMobile);
+    UsuarioInsta perfilDe(String username);
 
-    ListaEnlazada<Publicacion> obtenerTimeline(String username);
+    void actualizarPerfil(UsuarioInsta usuario) throws MiniWindowsException;
 
-    ListaEnlazada<Publicacion> obtenerInteracciones(String username);
+    void cambiarEstadoCuenta(String username, boolean activa) throws MiniWindowsException;
 
-    void seguirUsuario(String usuarioOrigen, String usuarioDestino);
+    void publicar(Publicacion publicacion) throws MiniWindowsException;
 
-    void dejarDeSeguir(String usuarioOrigen, String usuarioDestino);
+    ListaEnlazada<Publicacion> lineaDeTiempo(String username);
+
+    ListaEnlazada<Publicacion> publicacionesDe(String username);
+
+    ListaEnlazada<Publicacion> menciones(String username);
+
+    void darMeGusta(Publicacion publicacion, boolean marcado) throws MiniWindowsException;
+
+    void seguir(String origen, String destino) throws MiniWindowsException;
+
+    void dejarDeSeguir(String origen, String destino) throws MiniWindowsException;
+
+    boolean sigue(String origen, String destino);
+
+    ListaEnlazada<String> seguidosDe(String username);
+
+    ListaEnlazada<String> seguidoresDe(String username);
 
     ListaEnlazada<UsuarioInsta> buscarPersonas(String criterio);
 
+    ListaEnlazada<UsuarioInsta> sugerencias(String username, int maximo);
+
     ListaEnlazada<Publicacion> buscarHashtag(String hashtag);
 
-    void enviarMensaje(String emisor, String receptor, String contenido, String tipo);
+    void enviarMensaje(Mensaje mensaje) throws MiniWindowsException;
 
-    ListaEnlazada<Mensaje> obtenerConversacion(String usuario1, String usuario2);
+    ListaEnlazada<Mensaje> bandejaDe(String username);
 
-    void cambiarEstadoCuenta(String username, boolean activa);
+    ListaEnlazada<Mensaje> conversacion(String uno, String otro);
+
+    ListaEnlazada<String> contactosDe(String username);
+
+    int mensajesSinLeer(String username);
+
+    void marcarConversacionLeida(String username, String otro) throws MiniWindowsException;
+
+    void eliminarConversacion(String username, String otro) throws MiniWindowsException;
+
+    ListaEnlazada<Sticker> stickersDe(String username);
+
+    void agregarSticker(String username, String nombreArchivo, byte[] imagen) throws MiniWindowsException;
+
+    ListaEnlazada<String> carpetasPersonalesDe(String username);
+
+    void crearCarpetaPersonal(String username, String nombre) throws MiniWindowsException;
 }

@@ -49,6 +49,10 @@ public final class Iconos {
     public static final String PAUSA = "M6.5 5h4v14h-4V5zm7 0h4v14h-4V5z";
     public static final String DETENER = "M6 6h12v12H6V6z";
     public static final String VOLUMEN = "M4 9h4l5-4v14l-5-4H4V9zm12.6 3a4.5 4.5 0 0 0-2.6-4.1v8.2a4.5 4.5 0 0 0 2.6-4.1z";
+    public static final String OJO = "M12 5c5 0 9.3 3.1 11 7-1.7 3.9-6 7-11 7S2.7 15.9 1 12c1.7-3.9 6-7 11-7zm0 2c-3.9 0-7.3 2.2-8.8 5 1.5 2.8 4.9 5 8.8 5s7.3-2.2 8.8-5c-1.5-2.8-4.9-5-8.8-5zm0 1.8a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4z";
+    public static final String OJO_TACHADO = "M3.5 2.1l18.4 18.4-1.4 1.4-3.3-3.3A12 12 0 0 1 12 19c-5 0-9.3-3.1-11-7a12.4 12.4 0 0 1 4.3-5.2L2.1 3.5l1.4-1.4zM12 5c5 0 9.3 3.1 11 7a12.6 12.6 0 0 1-3.2 4.2l-3-3A4 4 0 0 0 11.8 8l-2.4-2.4A12 12 0 0 1 12 5zM6.7 8.1l1.8 1.8a4 4 0 0 0 5.6 5.6l1.4 1.4A6 6 0 0 1 12 18c-3.9 0-7.3-2.2-8.8-5a10.4 10.4 0 0 1 3.5-4.9z";
+    public static final String ORGANIZAR = "M3 4h7l2 2h9a1 1 0 0 1 1 1v2H3V4zm0 7h18v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9zm3 2v5h3v-5H6zm5 0v5h3v-5h-3zm5 0v5h3v-5h-3z";
+    public static final String STICKER = "M13 3.1A9 9 0 1 1 3.1 13H10a3 3 0 0 0 3-3V3.1zM15 3.7A9 9 0 0 1 20.3 9H15V3.7zM8.4 8.4a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6zm-2.2 5.4h5.6a2.8 2.8 0 0 1-5.6 0z";
     public static final String ZOOM_MAS = "M10.5 3a7.5 7.5 0 1 1-4.6 13.4l-2.5 2.5-1.4-1.4 2.5-2.5A7.5 7.5 0 0 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zm-1 2h2v2.5H14v2h-2.5V14h-2v-2.5H7v-2h2.5V7z";
     public static final String ZOOM_MENOS = "M10.5 3a7.5 7.5 0 1 1-4.6 13.4l-2.5 2.5-1.4-1.4 2.5-2.5A7.5 7.5 0 0 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM7 9.5h7v2H7v-2z";
     public static final String AJUSTAR = "M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm14 0h2v6h-6v-2h4v-4z";
@@ -125,6 +129,7 @@ public final class Iconos {
             case "explorador", "carpeta" -> CARPETA;
             case "editor", "documento" -> DOCUMENTO;
             case "visor", "imagen" -> IMAGEN;
+            case "insta" -> IMAGEN;
             case "reproductor", "musica" -> MUSICA;
             case "consola" -> CONSOLA;
             case "cuentas" -> CUENTAS;

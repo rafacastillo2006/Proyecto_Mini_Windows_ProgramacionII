@@ -9,7 +9,7 @@ import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
-import javafx.scene.control.PasswordField;
+import MiniWindows.SistemaOp.Escritorio.CampoContrasena;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
@@ -18,7 +18,7 @@ public class DialogoUsuario extends Dialog<SolicitudUsuario> {
 
     private final TextField nombreCompleto = Estilos.campo("Nombre y apellido");
     private final TextField username = Estilos.campo("Sin espacios");
-    private final PasswordField contrasena = Estilos.campoSecreto("Mínimo 4 caracteres");
+    private final CampoContrasena contrasena = new CampoContrasena("Letras y números, mínimo 6");
     private final Spinner<Integer> edad = new Spinner<>(1, 120, 18);
     private final ComboBox<Character> genero = new ComboBox<>();
     private final ComboBox<Rol> rol = new ComboBox<>();
@@ -52,7 +52,7 @@ public class DialogoUsuario extends Dialog<SolicitudUsuario> {
 
     private SolicitudUsuario construir() {
         return new SolicitudUsuario(nombreCompleto.getText().trim(), genero.getValue(),
-                username.getText().trim(), contrasena.getText(), edadIngresada(), rol.getValue());
+                username.getText().trim(), contrasena.getTexto(), edadIngresada(), rol.getValue());
     }
 
     private int edadIngresada() {

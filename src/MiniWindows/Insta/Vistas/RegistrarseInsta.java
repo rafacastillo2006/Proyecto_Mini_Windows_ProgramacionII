@@ -1,192 +1,159 @@
 package MiniWindows.Insta.Vistas;
 
-import MiniWindows.Insta.Servicio.ServicioInsta;
+import MiniWindows.Excepciones.MiniWindowsException;
+import MiniWindows.Insta.EstilosInsta;
+import MiniWindows.Insta.Imagen.ArteGenerado;
+import MiniWindows.Insta.Imagen.ProcesadorImagen;
+import MiniWindows.Insta.VentanaInsta;
 import MiniWindows.Modelo.UsuarioInsta;
-import MiniWindows.Excepciones.UsernameDuplicadoException;
+import MiniWindows.Util.Validador;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import MiniWindows.SistemaOp.Escritorio.CampoContrasena;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+
 import java.io.File;
+import java.nio.file.Files;
 
 public class RegistrarseInsta extends VBox {
 
-    private ServicioInsta servicio;
-    private Runnable onVolverALogin;
-    private String rutaFotoSeleccionada = "";
+    private static final int LADO_AVATAR = 320;
 
-    public RegistrarseInsta(ServicioInsta servicio, Runnable onVolverALogin) {
-        this.servicio = servicio;
-        this.onVolverALogin = onVolverALogin;
+    private final VentanaInsta ventana;
+    private final TextField nombre = new TextField();
+    private final TextField usuario = new TextField();
+    private final CampoContrasena clave = new CampoContrasena("Letras y números, mínimo 6", EstilosInsta.CAMPO);
+    private final TextField edad = new TextField();
+    private final ComboBox<String> genero = new ComboBox<>();
+    private final Label aviso = EstilosInsta.error("");
+    private final Label archivoElegido = EstilosInsta.leyenda("Se usara un avatar generado");
+
+    private byte[] foto;
+
+    public RegistrarseInsta(VentanaInsta ventana) {
+        this.ventana = ventana;
 
         setAlignment(Pos.CENTER);
         setPadding(new Insets(20));
-        setStyle("-fx-background-color: linear-gradient(to bottom right, #ff0055, #d62976, #962fbf);");
+        setStyle(EstilosInsta.DEGRADADO);
 
-        VBox cardForm = crearTarjetaRegistro();
-        VBox cardVolver = crearTarjetaVolverLink();
+        nombre.setPromptText("Nombre completo");
+        usuario.setPromptText("Nombre de usuario");
+        edad.setPromptText("Edad");
+        genero.getItems().addAll("Femenino", "Masculino");
+        genero.setPromptText("Genero");
+        genero.setMaxWidth(Double.MAX_VALUE);
+        for (javafx.scene.control.Control campo : new javafx.scene.control.Control[]{nombre, usuario, edad}) {
+            campo.setStyle(EstilosInsta.CAMPO);
+        }
+        aviso.setMinHeight(46);
 
-        VBox contenedor = new VBox(15, cardForm, cardVolver);
-        contenedor.setMaxWidth(350);
-        contenedor.setAlignment(Pos.CENTER);
+        VBox tarjeta = new VBox(10, EstilosInsta.titulo("Crear cuenta", 24),
+                EstilosInsta.leyenda("Registrate para ver fotos y videos de tus amigos"),
+                nombre, usuario, clave, edad, genero, botonFoto(), archivoElegido,
+                botonRegistrar(), aviso, pieDeLogin());
+        tarjeta.setAlignment(Pos.CENTER);
+        tarjeta.setPadding(new Insets(24, 26, 20, 26));
+        tarjeta.setMaxWidth(340);
+        tarjeta.setStyle(EstilosInsta.TARJETA);
 
-        getChildren().add(contenedor);
+        ScrollPane marco = new ScrollPane(tarjeta);
+        marco.setFitToWidth(true);
+        marco.setMaxWidth(380);
+        marco.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+        getChildren().add(marco);
     }
 
-    private VBox crearTarjetaRegistro() {
-        VBox box = new VBox(10);
-        box.setPadding(new Insets(25));
-        box.setAlignment(Pos.CENTER);
-        box.setStyle("-fx-background-color: #ffffff; -fx-border-color: #dbdbdb; -fx-border-radius: 3; -fx-background-radius: 3;");
-
-        Label lblTitulo = new Label("Instagram");
-        lblTitulo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 28));
-
-
-        TextField txtNombre = new TextField();
-        txtNombre.setPromptText("Nombre completo");
-
-        ComboBox<Character> cbGenero = new ComboBox<>();
-        cbGenero.getItems().addAll('M', 'F');
-        cbGenero.setPromptText("Género");
-        cbGenero.setMaxWidth(Double.MAX_VALUE);
-
-        TextField txtUser = new TextField();
-        txtUser.setPromptText("Nombre de usuario");
-
-        // Campo de contraseña con toggle de visibilidad
-        PasswordField txtPass = new PasswordField();
-        txtPass.setPromptText("Contraseña");
-        HBox.setHgrow(txtPass, Priority.ALWAYS);
-
-        TextField txtPassVisible = new TextField();
-        txtPassVisible.setPromptText("Contraseña");
-        txtPassVisible.setManaged(false);
-        txtPassVisible.setVisible(false);
-        HBox.setHgrow(txtPassVisible, Priority.ALWAYS);
-
-        Button btnVerPass = new Button("👁");
-        btnVerPass.setStyle("-fx-background-color: #fafafa; -fx-border-color: #dbdbdb; -fx-cursor: hand;");
-
-        btnVerPass.setOnAction(e -> {
-            if (txtPass.isVisible()) {
-                txtPassVisible.setText(txtPass.getText());
-                txtPass.setVisible(false);
-                txtPass.setManaged(false);
-                txtPassVisible.setVisible(true);
-                txtPassVisible.setManaged(true);
-                btnVerPass.setText("🙈");
-            } else {
-                txtPass.setText(txtPassVisible.getText());
-                txtPassVisible.setVisible(false);
-                txtPassVisible.setManaged(false);
-                txtPass.setVisible(true);
-                txtPass.setManaged(true);
-                btnVerPass.setText("👁");
-            }
-        });
-
-        HBox passBox = new HBox(5, txtPass, txtPassVisible, btnVerPass);
-
-        TextField txtEdad = new TextField();
-        txtEdad.setPromptText("Edad");
-
-        Button btnBuscarFoto = new Button("Seleccionar Foto de Perfil");
-        btnBuscarFoto.setMaxWidth(Double.MAX_VALUE);
-
-        Label lblFotoRuta = new Label("Ninguna foto seleccionada");
-        lblFotoRuta.setStyle("-fx-font-size: 10px; -fx-text-fill: #737373;");
-
-        btnBuscarFoto.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Seleccionar Foto de Perfil");
-            fileChooser.getExtensionFilters().addAll(
-                    new FileChooser.ExtensionFilter("Archivos de Imagen", "*.png", "*.jpg", "*.jpeg")
-            );
-            File archivo = fileChooser.showOpenDialog(getScene().getWindow());
-            if (archivo != null) {
-                rutaFotoSeleccionada = archivo.getAbsolutePath();
-                lblFotoRuta.setText(archivo.getName());
-            }
-        });
-
-        Button btnRegistrar = new Button("Registrarte");
-        btnRegistrar.setMaxWidth(Double.MAX_VALUE);
-        btnRegistrar.setStyle("-fx-background-color: #0095f6; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8; -fx-cursor: hand;");
-
-        Label lblMsg = new Label();
-        lblMsg.setWrapText(true);
-
-        btnRegistrar.setOnAction(e -> {
-            try {
-                String nombre = txtNombre.getText().trim();
-                Character genero = cbGenero.getValue();
-                String user = txtUser.getText().trim();
-                String pass = txtPass.isVisible() ? txtPass.getText().trim() : txtPassVisible.getText().trim();
-                String edadTexto = txtEdad.getText().trim();
-
-                if (nombre.isEmpty() || genero == null || user.isEmpty() || pass.isEmpty() || edadTexto.isEmpty()) {
-                    lblMsg.setTextFill(Color.RED);
-                    lblMsg.setText("Llene los campos obligatorios.");
-                    return;
-                }
-
-                String regexPassword = "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$";
-
-                if (!pass.matches(regexPassword)) {
-                    lblMsg.setTextFill(Color.RED);
-                    lblMsg.setText("La contraseña debe tener mínimo 8 caracteres, incluir letras, números y al menos un carácter especial.");
-                    return;
-                }
-
-                int edad = Integer.parseInt(edadTexto);
-
-                UsuarioInsta nuevo = new UsuarioInsta(nombre, genero, user, pass, edad, rutaFotoSeleccionada);
-                boolean exito = servicio.registrarUsuario(nuevo);
-
-                if (exito) {
-                    lblMsg.setTextFill(Color.GREEN);
-                    lblMsg.setText("¡Cuenta creada con éxito!");
-                }
-            } catch (NumberFormatException nfe) {
-                lblMsg.setTextFill(Color.RED);
-                lblMsg.setText("Edad inválida.");
-            } catch (UsernameDuplicadoException ex) {
-                lblMsg.setTextFill(Color.RED);
-                lblMsg.setText(ex.getMessage());
-            }
-        });
-
-        box.getChildren().addAll(lblTitulo, txtNombre, cbGenero, txtUser, passBox, txtEdad, btnBuscarFoto, lblFotoRuta, btnRegistrar, lblMsg);
-        return box;
+    private Button botonFoto() {
+        Button boton = EstilosInsta.botonSuave("Elegir foto de perfil");
+        boton.setMaxWidth(Double.MAX_VALUE);
+        boton.setOnAction(evento -> elegirFoto());
+        return boton;
     }
 
-    private VBox crearTarjetaVolverLink() {
-        VBox box = new VBox(5);
-        box.setPadding(new Insets(15));
-        box.setAlignment(Pos.CENTER);
-        box.setStyle("-fx-background-color: #ffffff; -fx-border-color: #dbdbdb; -fx-border-radius: 3; -fx-background-radius: 3;");
-
-        HBox hBox = new HBox(5);
-        hBox.setAlignment(Pos.CENTER);
-
-        Label lblPregunta = new Label("¿Tienes una cuenta?");
-        lblPregunta.setStyle("-fx-text-fill: #262626; -fx-font-size: 13px;");
-
-        Hyperlink linkLogin = new Hyperlink("Entrar");
-        linkLogin.setStyle("-fx-text-fill: #0095f6; -fx-font-weight: bold; -fx-border-color: transparent; -fx-padding: 0;");
-        linkLogin.setOnAction(e -> {
-            if (onVolverALogin != null) {
-                onVolverALogin.run();
+    private void elegirFoto() {
+        FileChooser selector = new FileChooser();
+        selector.setTitle("Foto de perfil");
+        selector.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Imagenes", "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif"));
+        File elegido = selector.showOpenDialog(getScene() == null ? null : getScene().getWindow());
+        if (elegido == null) {
+            return;
+        }
+        try {
+            byte[] ajustada = ProcesadorImagen.ajustar(Files.readAllBytes(elegido.toPath()), LADO_AVATAR);
+            if (ajustada == null) {
+                archivoElegido.setText("Ese archivo no es una imagen valida");
+                return;
             }
-        });
+            foto = ajustada;
+            archivoElegido.setText(elegido.getName());
+        } catch (Exception error) {
+            archivoElegido.setText("No se pudo leer la imagen");
+        }
+    }
 
-        hBox.getChildren().addAll(lblPregunta, linkLogin);
-        box.getChildren().add(hBox);
-        return box;
+    private Button botonRegistrar() {
+        Button boton = EstilosInsta.botonPrincipal("Registrarme");
+        boton.setOnAction(evento -> registrar());
+        return boton;
+    }
+
+    private HBox pieDeLogin() {
+        Button entrar = EstilosInsta.enlace("Entrar");
+        entrar.setOnAction(evento -> ventana.mostrarLogin());
+        HBox pie = new HBox(4, EstilosInsta.leyenda("Ya tienes una cuenta?"), entrar);
+        pie.setAlignment(Pos.CENTER);
+        return pie;
+    }
+
+    private void registrar() {
+        String nombreCompleto = nombre.getText().trim();
+        String username = usuario.getText().trim();
+        String contrasena = clave.getTexto();
+        String edadTexto = edad.getText().trim();
+
+        if (nombreCompleto.isEmpty() || username.isEmpty() || contrasena.isEmpty()
+                || edadTexto.isEmpty() || genero.getValue() == null) {
+            aviso.setText("Llena todos los campos.");
+            return;
+        }
+        if (!username.matches("[a-zA-Z0-9._]{3,20}")) {
+            aviso.setText("El usuario solo admite letras, numeros, punto y guion bajo (3 a 20).");
+            return;
+        }
+        if (!Validador.contrasenaValida(contrasena)) {
+            aviso.setText(Validador.REGLA_CONTRASENA);
+            return;
+        }
+        int anios;
+        try {
+            anios = Integer.parseInt(edadTexto);
+        } catch (NumberFormatException invalida) {
+            aviso.setText("La edad debe ser un numero.");
+            return;
+        }
+        if (anios < 13 || anios > 120) {
+            aviso.setText("La edad debe estar entre 13 y 120.");
+            return;
+        }
+
+        byte[] avatar = foto != null ? foto : ArteGenerado.avatar(nombreCompleto, username.length() + 4);
+        UsuarioInsta nuevo = new UsuarioInsta(nombreCompleto, genero.getValue().charAt(0),
+                username, contrasena, anios, avatar);
+        try {
+            ventana.getContexto().getServicio().registrar(nuevo);
+            ventana.getContexto().getSesion().abrir(nuevo);
+            ventana.mostrarSugerenciasIniciales();
+        } catch (MiniWindowsException error) {
+            aviso.setText(error.getMessage());
+        }
     }
 }

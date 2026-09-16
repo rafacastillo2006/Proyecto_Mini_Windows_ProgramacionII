@@ -1,45 +1,41 @@
 package MiniWindows.Insta.Hilos;
 
-import javafx.concurrent.Task;
+import MiniWindows.Util.Imagenes;
+import javafx.application.Platform;
 import javafx.scene.image.Image;
-import java.io.File;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Consumer;
 
 public class CargaIMGS {
 
-    public static void cargarImagenAsync(String rutaImagen, double anchoDeseado, double altoDeseado, CallbackCarga callback) {
-        Task<Image> tarea = new Task<Image>() {
-            @Override
-            protected Image call() throws Exception {
-                File archivo = new File(rutaImagen);
-                if (!archivo.exists()) {
-                    return null;
-                }
-                return new Image(archivo.toURI().toString(), anchoDeseado, altoDeseado, true, true);
-            }
-        };
+    public static final String NOMBRE_HILO = "MiniWindows-InstaImagenes";
 
-        tarea.setOnSucceeded(e -> {
-            if (callback != null) {
-                callback.onImagenCargada(tarea.getValue());
-            }
-        });
-
-        tarea.setOnFailed(e -> {
-            if (callback != null) {
-                callback.onError(tarea.getException());
-            }
-        });
-
-        Thread hilo = new Thread(tarea);
+    private final ExecutorService cargador = Executors.newSingleThreadExecutor(tarea -> {
+        Thread hilo = new Thread(tarea, NOMBRE_HILO);
         hilo.setDaemon(true);
-        hilo.start();
+        return hilo;
+    });
+
+    public void cargar(byte[] datos, double lado, Consumer<Image> destino) {
+        if (datos == null || datos.length == 0) {
+            return;
+        }
+        try {
+            cargador.execute(() -> {
+                Image imagen = Imagenes.miniatura(datos, lado);
+                if (imagen != null) {
+                    Platform.runLater(() -> destino.accept(imagen));
+                }
+            });
+        } catch (RejectedExecutionException cerrado) {
+            // el panel se esta cerrando, no hay nada que mostrar
+        }
     }
 
-    @FunctionalInterface
-    public interface CallbackCarga {
-        void onImagenCargada(Image imagen);
-        default void onError(Throwable e) {
-            System.err.println("Error al cargar imagen: " + e.getMessage());
-        }
+    public void detener() {
+        cargador.shutdownNow();
     }
 }

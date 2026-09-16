@@ -1,6 +1,7 @@
 package MiniWindows.SistemaOp.Nucleo;
 
 import MiniWindows.Excepciones.MiniWindowsException;
+import MiniWindows.Insta.AppInsta;
 import MiniWindows.SistemaOp.AdminCuentas.AppCuentas;
 import MiniWindows.SistemaOp.AdminTareas.AppAdminTareas;
 import MiniWindows.SistemaOp.Apps.RegistroAplicaciones;
@@ -12,6 +13,7 @@ import MiniWindows.SistemaOp.EditorTexto.AppEditorTexto;
 import MiniWindows.SistemaOp.Explorador.AppExplorador;
 import MiniWindows.SistemaOp.ReproductorMusica.AppReproductor;
 import MiniWindows.SistemaOp.VisorImagenes.AppVisorImagenes;
+import MiniWindows.Util.Rutas;
 
 import java.nio.file.Path;
 
@@ -34,6 +36,7 @@ public class SistemaOperativo {
 
     public void iniciar() throws MiniWindowsException {
         sistemaArchivos.montar();
+        Rutas.usarRaiz(sistemaArchivos.getRaizFisica());
         servicioCuentas.inicializar();
         registrarAplicaciones();
     }
@@ -56,6 +59,7 @@ public class SistemaOperativo {
         aplicaciones.registrar(new AppVisorImagenes());
         aplicaciones.registrar(new AppReproductor());
         aplicaciones.registrar(new AppConsola());
+        aplicaciones.registrar(new AppInsta());
         aplicaciones.registrar(new AppAdminTareas());
         aplicaciones.registrar(new AppCuentas());
     }

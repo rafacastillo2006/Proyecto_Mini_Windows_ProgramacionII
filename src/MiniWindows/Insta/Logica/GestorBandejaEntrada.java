@@ -1,38 +1,73 @@
 package MiniWindows.Insta.Logica;
 
 import MiniWindows.Estructuras.ListaEnlazada;
+import MiniWindows.Excepciones.MiniWindowsException;
 import MiniWindows.Modelo.Mensaje;
-import MiniWindows.Persistencia.GestorBinario;
 import MiniWindows.Util.Rutas;
 
 public class GestorBandejaEntrada {
 
-    public void enviarMensaje(String emisor, String receptor, String contenido, String tipo) {
-        Mensaje msg = new Mensaje(emisor, receptor, contenido, tipo);
-
-        GestorBinario<Mensaje> gbEmisor = new GestorBinario<>(Rutas.getRutaInbox(emisor));
-        ListaEnlazada<Mensaje> inboxEmisor = gbEmisor.leerLista();
-        inboxEmisor.agregar(msg);
-        gbEmisor.guardarLista(inboxEmisor);
-
-        GestorBinario<Mensaje> gbReceptor = new GestorBinario<>(Rutas.getRutaInbox(receptor));
-        ListaEnlazada<Mensaje> inboxReceptor = gbReceptor.leerLista();
-        inboxReceptor.agregar(msg);
-        gbReceptor.guardarLista(inboxReceptor);
+    public void enviar(Mensaje mensaje) throws MiniWindowsException {
+        agregarA(mensaje.getEmisor(), mensaje);
+        if (!mensaje.getEmisor().equalsIgnoreCase(mensaje.getReceptor())) {
+            agregarA(mensaje.getReceptor(), mensaje);
+        }
     }
 
-    public ListaEnlazada<Mensaje> obtenerConversacion(String u1, String u2) {
-        GestorBinario<Mensaje> gb = new GestorBinario<>(Rutas.getRutaInbox(u1));
-        ListaEnlazada<Mensaje> todos = gb.leerLista();
-        ListaEnlazada<Mensaje> chat = new ListaEnlazada<>();
+    public ListaEnlazada<Mensaje> bandejaDe(String username) {
+        return AlmacenInsta.leer(Rutas.getInbox(username), Mensaje.class);
+    }
 
-        for (int i = 0; i < todos.getTamano(); i++) {
-            Mensaje m = todos.obtener(i);
-            if ((m.getEmisor().equalsIgnoreCase(u1) && m.getReceptor().equalsIgnoreCase(u2)) ||
-                    (m.getEmisor().equalsIgnoreCase(u2) && m.getReceptor().equalsIgnoreCase(u1))) {
-                chat.agregar(m);
+    public ListaEnlazada<Mensaje> conversacion(String uno, String otro) {
+        return bandejaDe(uno).filtrar(mensaje -> entre(mensaje, uno, otro));
+    }
+
+    public int sinLeerDe(String username) {
+        return bandejaDe(username).filtrar(mensaje ->
+                !mensaje.estaLeido() && mensaje.getReceptor().equalsIgnoreCase(username)).tamano();
+    }
+
+    public void marcarConversacionLeida(String username, String otro) throws MiniWindowsException {
+        ListaEnlazada<Mensaje> bandeja = bandejaDe(username);
+        boolean cambio = false;
+        for (Mensaje mensaje : bandeja) {
+            if (entre(mensaje, username, otro) && !mensaje.estaLeido()
+                    && mensaje.getReceptor().equalsIgnoreCase(username)) {
+                mensaje.marcarLeido();
+                cambio = true;
             }
         }
-        return chat;
+        if (cambio) {
+            AlmacenInsta.escribir(Rutas.getInbox(username), bandeja);
+        }
+    }
+
+    public void eliminarConversacion(String username, String otro) throws MiniWindowsException {
+        AlmacenInsta.escribir(Rutas.getInbox(username),
+                bandejaDe(username).filtrar(mensaje -> !entre(mensaje, username, otro)));
+    }
+
+    public ListaEnlazada<String> contactosDe(String username) {
+        ListaEnlazada<String> contactos = new ListaEnlazada<>();
+        for (Mensaje mensaje : bandejaDe(username)) {
+            String otro = mensaje.getEmisor().equalsIgnoreCase(username)
+                    ? mensaje.getReceptor()
+                    : mensaje.getEmisor();
+            if (contactos.buscar(nombre -> nombre.equalsIgnoreCase(otro)) == null) {
+                contactos.agregar(otro);
+            }
+        }
+        return contactos;
+    }
+
+    private boolean entre(Mensaje mensaje, String uno, String otro) {
+        return (mensaje.getEmisor().equalsIgnoreCase(uno) && mensaje.getReceptor().equalsIgnoreCase(otro))
+                || (mensaje.getEmisor().equalsIgnoreCase(otro) && mensaje.getReceptor().equalsIgnoreCase(uno));
+    }
+
+    private void agregarA(String username, Mensaje mensaje) throws MiniWindowsException {
+        ListaEnlazada<Mensaje> bandeja = bandejaDe(username);
+        bandeja.agregar(mensaje);
+        AlmacenInsta.escribir(Rutas.getInbox(username), bandeja);
     }
 }

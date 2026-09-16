@@ -1,162 +1,318 @@
 package MiniWindows.Insta.Vistas;
 
 import MiniWindows.Estructuras.ListaEnlazada;
-import MiniWindows.Insta.Servicio.ServicioInsta;
-import MiniWindows.Insta.SesionInsta;
+import MiniWindows.Excepciones.MiniWindowsException;
+import MiniWindows.Insta.EstilosInsta;
 import MiniWindows.Insta.Hilos.Notificaciones;
+import MiniWindows.Insta.Imagen.Sticker;
+import MiniWindows.Insta.VentanaInsta;
 import MiniWindows.Modelo.Mensaje;
 import MiniWindows.Modelo.UsuarioInsta;
+import MiniWindows.Util.Fechas;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+
 import java.io.File;
+import java.nio.file.Files;
 
-public class BandejaEntrada extends VBox {
+public class BandejaEntrada extends BorderPane {
 
-    private ServicioInsta servicio;
-    private UsuarioInsta usuarioActual;
-    private String destinatarioActual = "";
-    private VBox chatArea;
-    private Notificaciones hiloNotificaciones;
+    private static final double LADO_STICKER = 96;
 
-    public BandejaEntrada(ServicioInsta servicio) {
-        this.servicio = servicio;
-        this.usuarioActual = SesionInsta.getInstancia().getUsuarioActual();
+    private final VentanaInsta ventana;
+    private final ListView<String> contactos = new ListView<>();
+    private final VBox mensajes = new VBox(6);
+    private final TextField entrada = new TextField();
+    private final Label aviso = EstilosInsta.leyenda("");
+    private final FlowPane galeriaStickers = new FlowPane(8, 8);
 
-        setSpacing(10);
-        setPadding(new Insets(15));
-        setAlignment(Pos.TOP_CENTER);
-        setStyle("-fx-background-color: #fafafa;");
+    private Notificaciones vigilante;
+    private String conversando;
 
-        if (usuarioActual == null) {
-            Label lblError = new Label("Debe iniciar sesión para acceder al Inbox.");
-            lblError.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-            getChildren().add(lblError);
+    public BandejaEntrada(VentanaInsta ventana, String contactoInicial) {
+        this.ventana = ventana;
+
+        setPadding(new Insets(16));
+        setStyle("-fx-background-color: " + EstilosInsta.FONDO + ";");
+
+        contactos.setPrefWidth(190);
+        contactos.setPlaceholder(EstilosInsta.leyenda("Sin conversaciones"));
+        contactos.getSelectionModel().selectedItemProperty().addListener(
+                (observable, anterior, actual) -> abrirConversacion(actual));
+
+        ScrollPane marco = new ScrollPane(mensajes);
+        marco.setFitToWidth(true);
+        marco.setStyle("-fx-background: white; -fx-background-color: white; -fx-border-color: transparent;");
+        mensajes.setPadding(new Insets(12));
+
+        entrada.setPromptText("Escribe un mensaje (máximo " + Mensaje.LIMITE_CARACTERES + ")");
+        entrada.setStyle(EstilosInsta.CAMPO);
+        entrada.setOnAction(evento -> enviarTexto());
+        entrada.textProperty().addListener((observable, anterior, actual) -> {
+            if (actual.length() > Mensaje.LIMITE_CARACTERES) {
+                entrada.setText(anterior);
+            }
+        });
+
+        Button enviar = EstilosInsta.botonPrincipal("Enviar");
+        enviar.setMaxWidth(90);
+        enviar.setOnAction(evento -> enviarTexto());
+
+        HBox pie = new HBox(8, entrada, enviar);
+        HBox.setHgrow(entrada, Priority.ALWAYS);
+        pie.setPadding(new Insets(8, 0, 0, 0));
+
+        galeriaStickers.setVisible(false);
+        galeriaStickers.setManaged(false);
+        galeriaStickers.setPadding(new Insets(8, 0, 0, 0));
+
+        VBox derecha = new VBox(6, barraConversacion(), marco, galeriaStickers, aviso, pie);
+        VBox.setVgrow(marco, Priority.ALWAYS);
+        derecha.setPadding(new Insets(0, 0, 0, 14));
+
+        setLeft(new VBox(8, EstilosInsta.titulo("Inbox", 20), nuevaConversacion(), contactos));
+        setCenter(derecha);
+
+        cargarContactos();
+        if (contactoInicial != null && !contactoInicial.isBlank()) {
+            abrirCon(contactoInicial);
+        }
+        vigilar();
+    }
+
+    private HBox barraConversacion() {
+        Button stickers = EstilosInsta.botonSuave("Enviar sticker");
+        stickers.setOnAction(evento -> alternarStickers());
+
+        Button importar = EstilosInsta.botonSuave("Importar sticker");
+        importar.setOnAction(evento -> importarSticker());
+
+        Button eliminar = EstilosInsta.botonSuave("Eliminar conversación");
+        eliminar.setOnAction(evento -> eliminarConversacion());
+
+        HBox barra = new HBox(8, stickers, importar, EstilosInsta.espaciador(), eliminar);
+        barra.setAlignment(Pos.CENTER_LEFT);
+        return barra;
+    }
+
+    private HBox nuevaConversacion() {
+        TextField destino = new TextField();
+        destino.setPromptText("@usuario");
+        destino.setStyle(EstilosInsta.CAMPO);
+        Button abrir = EstilosInsta.botonSuave("Abrir");
+        abrir.setOnAction(evento -> abrirCon(destino.getText()));
+        destino.setOnAction(evento -> abrirCon(destino.getText()));
+
+        HBox fila = new HBox(6, destino, abrir);
+        HBox.setHgrow(destino, Priority.ALWAYS);
+        return fila;
+    }
+
+    private void abrirCon(String texto) {
+        String nombre = texto == null ? "" : texto.trim().replace("@", "");
+        UsuarioInsta existe = ventana.getContexto().getServicio().perfilDe(nombre);
+        if (existe == null) {
+            aviso.setText("No existe @" + nombre);
             return;
         }
-
-        inicializarInterfaz();
-        iniciarNotificaciones();
+        aviso.setText("");
+        if (!contactos.getItems().contains(existe.getUsername())) {
+            contactos.getItems().add(existe.getUsername());
+        }
+        contactos.getSelectionModel().select(existe.getUsername());
     }
 
-    private void inicializarInterfaz() {
-        HBox contenedorPrincipal = new HBox(15);
-        contenedorPrincipal.setPrefHeight(450);
-
-        VBox panelDestinatario = new VBox(8);
-        panelDestinatario.setPrefWidth(150);
-        panelDestinatario.setPadding(new Insets(10));
-        panelDestinatario.setStyle("-fx-background-color: #ffffff; -fx-border-color: #dbdbdb;");
-
-        Label lblDestino = new Label("Bandeja de Entrada");
-        lblDestino.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-
-        TextField txtDestinatario = new TextField();
-        txtDestinatario.setPromptText("@usuario");
-
-        Button btnAbrirChat = new Button("Abrir Chat");
-        btnAbrirChat.setMaxWidth(Double.MAX_VALUE);
-        btnAbrirChat.setStyle("-fx-background-color: #efefef;");
-
-        panelDestinatario.getChildren().addAll(lblDestino, txtDestinatario, btnAbrirChat);
-
-        VBox panelChat = new VBox(10);
-        panelChat.setPrefWidth(300);
-        HBox.setHgrow(panelChat, Priority.ALWAYS);
-
-        chatArea = new VBox(8);
-        chatArea.setPadding(new Insets(10));
-
-        ScrollPane scrollChat = new ScrollPane(chatArea);
-        scrollChat.setFitToWidth(true);
-        scrollChat.setPrefHeight(350);
-        scrollChat.setStyle("-fx-background-color: #ffffff; -fx-border-color: #dbdbdb;");
-
-        HBox cajaEnvio = new HBox(8);
-        cajaEnvio.setAlignment(Pos.CENTER);
-
-        TextField txtMensaje = new TextField();
-        txtMensaje.setPromptText("Escribe un mensaje...");
-        HBox.setHgrow(txtMensaje, Priority.ALWAYS);
-
-        Button btnSticker = new Button("📁");
-        btnSticker.setTooltip(new Tooltip("Enviar Sticker"));
-
-        Button btnEnviar = new Button("Enviar");
-        btnEnviar.setStyle("-fx-background-color: #0095f6; -fx-text-fill: white; -fx-font-weight: bold;");
-
-        cajaEnvio.getChildren().addAll(txtMensaje, btnSticker, btnEnviar);
-        panelChat.getChildren().addAll(scrollChat, cajaEnvio);
-
-        contenedorPrincipal.getChildren().addAll(panelDestinatario, panelChat);
-        getChildren().add(contenedorPrincipal);
-
-        btnAbrirChat.setOnAction(e -> {
-            destinatarioActual = txtDestinatario.getText().trim();
-            cargarChat();
-        });
-
-        btnEnviar.setOnAction(e -> {
-            String texto = txtMensaje.getText().trim();
-            if (!destinatarioActual.isEmpty() && !texto.isEmpty()) {
-                servicio.enviarMensaje(usuarioActual.getUsername(), destinatarioActual, texto, "TEXTO");
-                txtMensaje.clear();
-                cargarChat();
-            }
-        });
-
-        btnSticker.setOnAction(e -> {
-            if (destinatarioActual.isEmpty()) return;
-            FileChooser fc = new FileChooser();
-            fc.setTitle("Seleccionar Sticker");
-            fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg"));
-            File f = fc.showOpenDialog(getScene().getWindow());
-            if (f != null) {
-                servicio.enviarMensaje(usuarioActual.getUsername(), destinatarioActual, f.getAbsolutePath(), "STICKER");
-                cargarChat();
-            }
-        });
-    }
-
-    private void cargarChat() {
-        chatArea.getChildren().clear();
-        if (destinatarioActual.isEmpty()) return;
-
-        ListaEnlazada<Mensaje> conversacion = servicio.obtenerConversacion(usuarioActual.getUsername(), destinatarioActual);
-
-        for (int i = 0; i < conversacion.getTamano(); i++) {
-            Mensaje m = conversacion.obtener(i);
-            boolean esMio = m.getEmisor().equalsIgnoreCase(usuarioActual.getUsername());
-
-            Label lblMsg = new Label((esMio ? "Tú: " : "@" + m.getEmisor() + ": ") + m.getContenido());
-            lblMsg.setWrapText(true);
-            lblMsg.setMaxWidth(220);
-            lblMsg.setPadding(new Insets(6, 10, 6, 10));
-
-            HBox fila = new HBox(lblMsg);
-            if (esMio) {
-                fila.setAlignment(Pos.CENTER_RIGHT);
-                lblMsg.setStyle("-fx-background-color: #efefef; -fx-background-radius: 10;");
-            } else {
-                fila.setAlignment(Pos.CENTER_LEFT);
-                lblMsg.setStyle("-fx-background-color: #0095f6; -fx-text-fill: white; -fx-background-radius: 10;");
-            }
-
-            chatArea.getChildren().add(fila);
+    private void cargarContactos() {
+        String seleccion = contactos.getSelectionModel().getSelectedItem();
+        contactos.getItems().setAll(
+                ventana.getContexto().getServicio()
+                        .contactosDe(ventana.getContexto().getUsuarioActual()).aLista());
+        if (seleccion != null && contactos.getItems().contains(seleccion)) {
+            contactos.getSelectionModel().select(seleccion);
+        } else if (!contactos.getItems().isEmpty()) {
+            contactos.getSelectionModel().selectFirst();
         }
     }
 
-    private void iniciarNotificaciones() {
-        hiloNotificaciones = new Notificaciones(usuarioActual.getUsername(), mensajeNuevo -> {
-            if (mensajeNuevo.getEmisor().equalsIgnoreCase(destinatarioActual)) {
-                cargarChat();
+    private void abrirConversacion(String otro) {
+        conversando = otro;
+        mensajes.getChildren().clear();
+        if (otro == null) {
+            return;
+        }
+        String yo = ventana.getContexto().getUsuarioActual();
+        for (Mensaje mensaje : ventana.getContexto().getServicio().conversacion(yo, otro)) {
+            mensajes.getChildren().add(burbuja(mensaje, mensaje.getEmisor().equalsIgnoreCase(yo)));
+        }
+        try {
+            ventana.getContexto().getServicio().marcarConversacionLeida(yo, otro);
+        } catch (MiniWindowsException error) {
+            aviso.setText(error.getMessage());
+        }
+    }
+
+    private VBox burbuja(Mensaje mensaje, boolean propio) {
+        VBox caja = new VBox(2);
+        caja.setAlignment(propio ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+        caja.setMaxWidth(Double.MAX_VALUE);
+
+        if (mensaje.esSticker() && mensaje.getSticker() != null) {
+            ImageView vista = new ImageView();
+            vista.setFitWidth(LADO_STICKER);
+            vista.setFitHeight(LADO_STICKER);
+            vista.setPreserveRatio(true);
+            ventana.getCargador().cargar(mensaje.getSticker(), LADO_STICKER, vista::setImage);
+            caja.getChildren().add(vista);
+        } else {
+            Label texto = EstilosInsta.texto(mensaje.getContenido());
+            texto.setWrapText(true);
+            texto.setMaxWidth(320);
+            texto.setPadding(new Insets(8, 12, 8, 12));
+            texto.setStyle(texto.getStyle() + " -fx-background-radius: 14; -fx-background-color: "
+                    + (propio ? "#dbeafe" : "#efefef") + ";");
+            caja.getChildren().add(texto);
+        }
+
+        String marca = Fechas.formatearHora(mensaje.getFecha())
+                + (propio ? "" : mensaje.estaLeido() ? "  ·  leído" : "  ·  nuevo");
+        caja.getChildren().add(EstilosInsta.leyenda(marca));
+        return caja;
+    }
+
+    private void alternarStickers() {
+        boolean visible = galeriaStickers.isVisible();
+        if (!visible) {
+            galeriaStickers.getChildren().clear();
+            ListaEnlazada<Sticker> disponibles = ventana.getContexto().getServicio()
+                    .stickersDe(ventana.getContexto().getUsuarioActual());
+            for (Sticker sticker : disponibles) {
+                galeriaStickers.getChildren().add(botonSticker(sticker));
+            }
+        }
+        galeriaStickers.setVisible(!visible);
+        galeriaStickers.setManaged(!visible);
+    }
+
+    private Button botonSticker(Sticker sticker) {
+        ImageView vista = new ImageView();
+        vista.setFitWidth(56);
+        vista.setFitHeight(56);
+        vista.setPreserveRatio(true);
+        ventana.getCargador().cargar(sticker.datos(), 56, vista::setImage);
+
+        Button boton = new Button();
+        boton.setGraphic(vista);
+        boton.setTooltip(new javafx.scene.control.Tooltip(sticker.nombre()));
+        boton.setStyle("-fx-background-color: white; -fx-border-color: " + EstilosInsta.BORDE
+                + "; -fx-background-radius: 8; -fx-border-radius: 8; -fx-cursor: hand;");
+        boton.setOnAction(evento -> enviarSticker(sticker));
+        return boton;
+    }
+
+    private void importarSticker() {
+        FileChooser selector = new FileChooser();
+        selector.setTitle("Importar sticker");
+        selector.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Imagenes", "*.png", "*.jpg", "*.jpeg"));
+        File elegido = selector.showOpenDialog(getScene() == null ? null : getScene().getWindow());
+        if (elegido == null) {
+            return;
+        }
+        try {
+            ventana.getContexto().getServicio().agregarSticker(
+                    ventana.getContexto().getUsuarioActual(), elegido.getName(),
+                    Files.readAllBytes(elegido.toPath()));
+            aviso.setText("Sticker agregado.");
+            if (galeriaStickers.isVisible()) {
+                alternarStickers();
+                alternarStickers();
+            }
+        } catch (MiniWindowsException error) {
+            aviso.setText(error.getMessage());
+        } catch (Exception error) {
+            aviso.setText("No se pudo leer la imagen.");
+        }
+    }
+
+    private void enviarSticker(Sticker sticker) {
+        if (conversando == null) {
+            aviso.setText("Elige primero una conversacion.");
+            return;
+        }
+        enviar(new Mensaje(ventana.getContexto().getUsuarioActual(), conversando,
+                sticker.nombre(), Mensaje.STICKER, sticker.datos()));
+    }
+
+    private void enviarTexto() {
+        String texto = entrada.getText().trim();
+        if (texto.isEmpty() || conversando == null) {
+            return;
+        }
+        enviar(new Mensaje(ventana.getContexto().getUsuarioActual(), conversando, texto));
+        entrada.clear();
+    }
+
+    private void enviar(Mensaje mensaje) {
+        try {
+            ventana.getContexto().getServicio().enviarMensaje(mensaje);
+            abrirConversacion(conversando);
+            aviso.setText("");
+        } catch (MiniWindowsException error) {
+            aviso.setText(error.getMessage());
+        }
+    }
+
+    private void eliminarConversacion() {
+        if (conversando == null) {
+            return;
+        }
+        if (!ventana.confirmar("Eliminar conversación",
+                "Se borrara toda la conversacion con @" + conversando + ". ¿Continuar?")) {
+            return;
+        }
+        try {
+            ventana.getContexto().getServicio().eliminarConversacion(
+                    ventana.getContexto().getUsuarioActual(), conversando);
+            conversando = null;
+            mensajes.getChildren().clear();
+            cargarContactos();
+        } catch (MiniWindowsException error) {
+            aviso.setText(error.getMessage());
+        }
+    }
+
+    private void vigilar() {
+        sceneProperty().addListener((observable, anterior, actual) -> {
+            if (actual == null) {
+                if (vigilante != null) {
+                    vigilante.detener();
+                    vigilante = null;
+                }
+            } else if (vigilante == null) {
+                vigilante = new Notificaciones(ventana.getContexto().getServicio(),
+                        ventana.getContexto().getUsuarioActual(), this::avisar);
+                vigilante.start();
             }
         });
-        hiloNotificaciones.start();
+    }
+
+    private void avisar(Mensaje mensaje) {
+        aviso.setText("Nuevo mensaje de @" + mensaje.getEmisor());
+        cargarContactos();
+        if (mensaje.getEmisor().equalsIgnoreCase(conversando)) {
+            abrirConversacion(conversando);
+        }
     }
 }

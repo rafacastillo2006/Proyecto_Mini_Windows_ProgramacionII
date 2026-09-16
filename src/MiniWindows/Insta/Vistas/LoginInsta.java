@@ -1,150 +1,105 @@
 package MiniWindows.Insta.Vistas;
 
-import MiniWindows.Insta.SesionInsta;
-import MiniWindows.Insta.Servicio.ServicioInsta;
-import MiniWindows.Modelo.UsuarioInsta;
 import MiniWindows.Excepciones.CuentaDesactivadaException;
+import MiniWindows.Insta.EstilosInsta;
+import MiniWindows.Insta.VentanaInsta;
+import MiniWindows.Modelo.UsuarioInsta;
+import MiniWindows.SistemaOp.Escritorio.CampoContrasena;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 public class LoginInsta extends VBox {
 
-    private ServicioInsta servicio;
-    private Runnable onLoginExitoso;
-    private Runnable onIrARegistro;
+    private final VentanaInsta ventana;
+    private final TextField usuario = new TextField();
+    private final CampoContrasena clave = new CampoContrasena("Contraseña", EstilosInsta.CAMPO);
+    private final Label aviso = EstilosInsta.error("");
+    private final HBox reintento = new HBox(8);
 
-    public LoginInsta(ServicioInsta servicio, Runnable onLoginExitoso, Runnable onIrARegistro) {
-        this.servicio = servicio;
-        this.onLoginExitoso = onLoginExitoso;
-        this.onIrARegistro = onIrARegistro;
+    public LoginInsta(VentanaInsta ventana) {
+        this.ventana = ventana;
 
         setAlignment(Pos.CENTER);
-        setPadding(new Insets(20));
-        setStyle("-fx-background-color: linear-gradient(to bottom right, #ff0055, #d62976, #962fbf);");
-        VBox cardLogin = crearTarjetaLogin();
-        VBox cardRegistroLink = crearTarjetaRegistroLink();
+        setPadding(new Insets(24));
+        setStyle(EstilosInsta.DEGRADADO);
 
-        VBox contenedor = new VBox(12, cardLogin, cardRegistroLink);
-        contenedor.setMaxWidth(350);
-        contenedor.setAlignment(Pos.CENTER);
+        usuario.setPromptText("Nombre de usuario");
+        usuario.setStyle(EstilosInsta.CAMPO);
+        usuario.setOnAction(evento -> clave.pedirFoco());
+        clave.alConfirmar(evento -> entrar());
+        aviso.setMinHeight(30);
 
-        getChildren().add(contenedor);
+        reintento.setAlignment(Pos.CENTER);
+        reintento.setVisible(false);
+        reintento.setManaged(false);
+        Button reintentar = EstilosInsta.botonSuave("Reintentar");
+        reintentar.setOnAction(evento -> prepararReintento());
+        Button crear = EstilosInsta.botonPrincipal("Crear una cuenta");
+        crear.setMaxWidth(160);
+        crear.setOnAction(evento -> ventana.mostrarRegistro());
+        reintento.getChildren().addAll(reintentar, crear);
+
+        VBox tarjeta = new VBox(12, EstilosInsta.titulo("INSTA+", 30),
+                EstilosInsta.leyenda("Entra con tu cuenta de INSTA+"),
+                usuario, clave, botonEntrar(), aviso, reintento, pieDeRegistro());
+        tarjeta.setAlignment(Pos.CENTER);
+        tarjeta.setPadding(new Insets(28, 26, 22, 26));
+        tarjeta.setMaxWidth(340);
+        tarjeta.setStyle(EstilosInsta.TARJETA);
+
+        getChildren().add(tarjeta);
     }
 
-    private VBox crearTarjetaLogin() {
-        VBox box = new VBox(12);
-        box.setPadding(new Insets(30, 25, 25, 25));
-        box.setAlignment(Pos.CENTER);
-        box.setStyle("-fx-background-color: #ffffff; -fx-border-color: #dbdbdb; -fx-border-radius: 3; -fx-background-radius: 3;");
+    private Button botonEntrar() {
+        Button boton = EstilosInsta.botonPrincipal("Iniciar sesión");
+        boton.setOnAction(evento -> entrar());
+        return boton;
+    }
 
-        Label lblTitulo = new Label("Instagram");
-        lblTitulo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 32));
-        lblTitulo.setPadding(new Insets(0, 0, 15, 0));
+    private HBox pieDeRegistro() {
+        Button registrarse = EstilosInsta.enlace("Regístrate");
+        registrarse.setOnAction(evento -> ventana.mostrarRegistro());
+        HBox pie = new HBox(4, EstilosInsta.leyenda("¿No tienes una cuenta?"), registrarse);
+        pie.setAlignment(Pos.CENTER);
+        return pie;
+    }
 
-        TextField txtUser = new TextField();
-        txtUser.setPromptText("Nombre de usuario");
-        txtUser.setStyle("-fx-background-color: #fafafa; -fx-border-color: #dbdbdb; -fx-border-radius: 3; -fx-padding: 8;");
+    private void prepararReintento() {
+        clave.limpiar();
+        aviso.setText("");
+        mostrarOpciones(false);
+        usuario.requestFocus();
+    }
 
-        // Campo de contraseña con opción de mostrar/ocultar
-        PasswordField txtPass = new PasswordField();
-        txtPass.setPromptText("Contraseña");
-        txtPass.setStyle("-fx-background-color: #fafafa; -fx-border-color: #dbdbdb; -fx-border-radius: 3; -fx-padding: 8;");
-        HBox.setHgrow(txtPass, Priority.ALWAYS);
+    private void mostrarOpciones(boolean visible) {
+        reintento.setVisible(visible);
+        reintento.setManaged(visible);
+    }
 
-        TextField txtPassVisible = new TextField();
-        txtPassVisible.setPromptText("Contraseña");
-        txtPassVisible.setStyle("-fx-background-color: #fafafa; -fx-border-color: #dbdbdb; -fx-border-radius: 3; -fx-padding: 8;");
-        txtPassVisible.setManaged(false);
-        txtPassVisible.setVisible(false);
-        HBox.setHgrow(txtPassVisible, Priority.ALWAYS);
-
-        Button btnVerPass = new Button("👁");
-        btnVerPass.setStyle("-fx-background-color: #fafafa; -fx-border-color: #dbdbdb; -fx-cursor: hand;");
-
-        btnVerPass.setOnAction(e -> {
-            if (txtPass.isVisible()) {
-                txtPassVisible.setText(txtPass.getText());
-                txtPass.setVisible(false);
-                txtPass.setManaged(false);
-                txtPassVisible.setVisible(true);
-                txtPassVisible.setManaged(true);
-                btnVerPass.setText("🙈");
-            } else {
-                txtPass.setText(txtPassVisible.getText());
-                txtPassVisible.setVisible(false);
-                txtPassVisible.setManaged(false);
-                txtPass.setVisible(true);
-                txtPass.setManaged(true);
-                btnVerPass.setText("👁");
-            }
-        });
-
-        HBox passBox = new HBox(5, txtPass, txtPassVisible, btnVerPass);
-        passBox.setAlignment(Pos.CENTER);
-
-        Button btnIngresar = new Button("Iniciar sesión");
-        btnIngresar.setMaxWidth(Double.MAX_VALUE);
-        btnIngresar.setStyle("-fx-background-color: #0095f6; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8; -fx-cursor: hand;");
-
-        Label lblError = new Label();
-        lblError.setTextFill(Color.RED);
-        lblError.setWrapText(true);
-
-        btnIngresar.setOnAction(e -> {
-            String user = txtUser.getText().trim();
-            String pass = txtPass.isVisible() ? txtPass.getText().trim() : txtPassVisible.getText().trim();
-
-            if (user.isEmpty() || pass.isEmpty()) {
-                lblError.setText("Complete todos los campos.");
+    private void entrar() {
+        String nombre = usuario.getText().trim();
+        String contrasena = clave.getTexto();
+        if (nombre.isEmpty() || contrasena.isEmpty()) {
+            aviso.setText("Escribe tu usuario y tu contraseña.");
+            return;
+        }
+        try {
+            UsuarioInsta encontrado = ventana.getContexto().getServicio().autenticar(nombre, contrasena);
+            if (encontrado == null) {
+                aviso.setText("Usuario o contraseña incorrectos. ¿Quieres reintentar o crear una cuenta?");
+                mostrarOpciones(true);
                 return;
             }
-
-            try {
-                UsuarioInsta u = servicio.autenticar(user, pass);
-                if (u != null) {
-                    SesionInsta.getInstancia().iniciarSesion(u);
-                    if (onLoginExitoso != null) {
-                        onLoginExitoso.run();
-                    }
-                } else {
-                    lblError.setText("Credenciales incorrectas.");
-                }
-            } catch (CuentaDesactivadaException ex) {
-                lblError.setText(ex.getMessage());
-            }
-        });
-
-        box.getChildren().addAll(lblTitulo, txtUser, passBox, btnIngresar, lblError);
-        return box;
-    }
-
-    private VBox crearTarjetaRegistroLink() {
-        VBox box = new VBox(5);
-        box.setPadding(new Insets(15));
-        box.setAlignment(Pos.CENTER);
-        box.setStyle("-fx-background-color: #ffffff; -fx-border-color: #dbdbdb; -fx-border-radius: 3; -fx-background-radius: 3;");
-
-        HBox hBox = new HBox(5);
-        hBox.setAlignment(Pos.CENTER);
-
-        Label lblPregunta = new Label("¿No tienes una cuenta?");
-        lblPregunta.setStyle("-fx-text-fill: #262626; -fx-font-size: 13px;");
-
-        Hyperlink linkRegistro = new Hyperlink("Regístrate");
-        linkRegistro.setStyle("-fx-text-fill: #0095f6; -fx-font-weight: bold; -fx-border-color: transparent; -fx-padding: 0;");
-        linkRegistro.setOnAction(e -> {
-            if (onIrARegistro != null) {
-                onIrARegistro.run();
-            }
-        });
-
-        hBox.getChildren().addAll(lblPregunta, linkRegistro);
-        box.getChildren().add(hBox);
-        return box;
+            ventana.getContexto().getSesion().abrir(encontrado);
+            ventana.mostrarInicio();
+        } catch (CuentaDesactivadaException desactivada) {
+            aviso.setText(desactivada.getMessage());
+            mostrarOpciones(true);
+        }
     }
 }

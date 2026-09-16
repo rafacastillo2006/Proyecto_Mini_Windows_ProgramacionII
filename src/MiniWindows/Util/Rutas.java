@@ -1,50 +1,106 @@
 package MiniWindows.Util;
 
-import java.io.File;
+import MiniWindows.SistemaOp.Nucleo.RutasSistema;
 
-public class Rutas {
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-    public static final String INSTA_RAIZ = "Z_Drive/INSTA_RAIZ";
-    public static final String USERS_FILE = INSTA_RAIZ + "/users.ins";
-    public static final String STICKERS_GLOBALES = INSTA_RAIZ + "/stickers_globales";
+public final class Rutas {
 
-    public static void inicializarEstructuraSO() {
-        crearDirectorio(INSTA_RAIZ);
-        crearDirectorio(STICKERS_GLOBALES);
+    public static final String INSTA_RAIZ = "INSTA_RAIZ";
+    public static final String USERS = "users.ins";
+    public static final String SESIONES = "sesiones.ins";
+    public static final String FOLLOWING = "following.ins";
+    public static final String FOLLOWERS = "followers.ins";
+    public static final String INSTA = "insta.ins";
+    public static final String INBOX = "inbox.ins";
+    public static final String STICKERS = "stickers.ins";
+    public static final String STICKERS_GLOBALES = "stickers_globales";
+    public static final String IMAGENES = "imagenes";
+    public static final String FOLDERS_PERSONALES = "folders_personales";
+    public static final String STICKERS_PERSONALES = "stickers_personales";
+
+    private static Path raiz;
+
+    private Rutas() {
     }
 
-    public static void crearEstructuraUsuario(String username) {
-        String userDir = INSTA_RAIZ + "/" + username;
-        crearDirectorio(userDir);
-        crearDirectorio(userDir + "/imagenes");
-        crearDirectorio(userDir + "/folders_personales");
-        crearDirectorio(userDir + "/stickers_personales");
+    public static void usarRaiz(Path raizFisicaDeLaUnidad) {
+        raiz = raizFisicaDeLaUnidad.resolve(RutasSistema.CARPETA_SISTEMA).resolve(INSTA_RAIZ);
+        crear(raiz);
+        crear(raiz.resolve(STICKERS_GLOBALES));
     }
 
-    public static String getRutaInbox(String username) {
-        return INSTA_RAIZ + "/" + username + "/inbox.ins";
+    public static Path getRaiz() {
+        if (raiz == null) {
+            usarRaiz(RutasSistema.raizFisica());
+        }
+        return raiz;
     }
 
-    public static String getRutaStickers(String username) {
-        return INSTA_RAIZ + "/" + username + "/stickers.ins";
+    public static Path getUsers() {
+        return getRaiz().resolve(USERS);
     }
 
-    public static String getRutaFollowing(String username) {
-        return INSTA_RAIZ + "/" + username + "/following.ins";
+    public static Path getSesiones() {
+        return getRaiz().resolve(SESIONES);
     }
 
-    public static String getRutaFollowers(String username) {
-        return INSTA_RAIZ + "/" + username + "/followers.ins";
+    public static Path getStickersGlobales() {
+        return getRaiz().resolve(STICKERS_GLOBALES);
     }
 
-    public static String getRutaPosts(String username) {
-        return INSTA_RAIZ + "/" + username + "/insta.ins";
+    public static Path getCarpetaDe(String username) {
+        Path carpeta = getRaiz().resolve(username.toLowerCase());
+        crear(carpeta);
+        return carpeta;
     }
 
-    private static void crearDirectorio(String ruta) {
-        File dir = new File(ruta);
-        if (!dir.exists()) {
-            dir.mkdirs();
+    public static void crearEstructuraDe(String username) {
+        Path carpeta = getCarpetaDe(username);
+        crear(carpeta.resolve(IMAGENES));
+        crear(carpeta.resolve(FOLDERS_PERSONALES));
+        crear(carpeta.resolve(STICKERS_PERSONALES));
+    }
+
+    public static Path getImagenesDe(String username) {
+        return getCarpetaDe(username).resolve(IMAGENES);
+    }
+
+    public static Path getFoldersPersonalesDe(String username) {
+        return getCarpetaDe(username).resolve(FOLDERS_PERSONALES);
+    }
+
+    public static Path getStickersPersonalesDe(String username) {
+        return getCarpetaDe(username).resolve(STICKERS_PERSONALES);
+    }
+
+    public static Path getFollowing(String username) {
+        return getCarpetaDe(username).resolve(FOLLOWING);
+    }
+
+    public static Path getFollowers(String username) {
+        return getCarpetaDe(username).resolve(FOLLOWERS);
+    }
+
+    public static Path getInsta(String username) {
+        return getCarpetaDe(username).resolve(INSTA);
+    }
+
+    public static Path getInbox(String username) {
+        return getCarpetaDe(username).resolve(INBOX);
+    }
+
+    public static Path getStickers(String username) {
+        return getCarpetaDe(username).resolve(STICKERS);
+    }
+
+    private static void crear(Path carpeta) {
+        try {
+            Files.createDirectories(carpeta);
+        } catch (IOException error) {
+            throw new IllegalStateException("No se pudo preparar " + carpeta, error);
         }
     }
 }

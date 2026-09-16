@@ -17,7 +17,7 @@ import java.util.Locale;
 public class ServicioCuentas {
 
     public static final String ADMINISTRADOR_POR_DEFECTO = "admin";
-    public static final String CONTRASENA_POR_DEFECTO = "admin";
+    public static final String CONTRASENA_POR_DEFECTO = "admin123";
 
     private final RepositorioUsuarios repositorio;
     private final SistemaArchivos sistemaArchivos;
@@ -94,8 +94,7 @@ public class ServicioCuentas {
 
     public synchronized void cambiarContrasena(Usuario usuario, String contrasena) throws MiniWindowsException {
         if (!Validador.contrasenaValida(contrasena)) {
-            throw new PermisoDenegadoException("La contrasena debe tener al menos "
-                    + Validador.LONGITUD_MINIMA_CONTRASENA + " caracteres");
+            throw new PermisoDenegadoException(Validador.REGLA_CONTRASENA);
         }
         String anterior = usuario.getHashContrasena();
         usuario.setHashContrasena(Contrasenas.cifrar(contrasena));
@@ -180,8 +179,7 @@ public class ServicioCuentas {
                     + "solo letras, numeros, punto, guion o guion bajo, y no puede ser un nombre reservado");
         }
         if (!Validador.contrasenaValida(solicitud.contrasena())) {
-            throw new PermisoDenegadoException("La contrasena debe tener al menos "
-                    + Validador.LONGITUD_MINIMA_CONTRASENA + " caracteres");
+            throw new PermisoDenegadoException(Validador.REGLA_CONTRASENA);
         }
         if (!Validador.edadValida(solicitud.edad())) {
             throw new PermisoDenegadoException("La edad ingresada no es valida");

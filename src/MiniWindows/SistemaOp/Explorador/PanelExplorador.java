@@ -132,6 +132,10 @@ public class PanelExplorador extends BorderPane {
                 "Copiar imágenes o música desde tu computadora");
         importar.setOnAction(evento -> acciones.importar(this, carpetaActual));
 
+        Button organizar = Estilos.botonHerramienta(Iconos.ORGANIZAR, "Organizar",
+                "Clasificar las imágenes y la música de esta carpeta en subcarpetas");
+        organizar.setOnAction(evento -> organizarCarpeta(organizar));
+
         Button renombrar = Estilos.botonIcono(Iconos.RENOMBRAR, "Renombrar");
         renombrar.setOnAction(evento -> acciones.renombrar(this, seleccionado()));
 
@@ -162,7 +166,7 @@ public class PanelExplorador extends BorderPane {
 
         FlowPane barra = new FlowPane(4, 4, botonAtras, botonAdelante, botonArriba, actualizar,
                 Estilos.separadorVertical(),
-                nuevaCarpeta, nuevoDocumento, importar, Estilos.separadorVertical(),
+                nuevaCarpeta, nuevoDocumento, importar, organizar, Estilos.separadorVertical(),
                 renombrar, copiar, cortar, pegar, eliminar, Estilos.separadorVertical(),
                 Estilos.etiqueta("Ordenar por"), orden, busqueda);
         barra.setAlignment(Pos.CENTER_LEFT);
@@ -358,6 +362,19 @@ public class PanelExplorador extends BorderPane {
         if (carpetaActual != null) {
             navegar(carpetaActual, false);
         }
+    }
+
+    private void organizarCarpeta(Button boton) {
+        boton.setDisable(true);
+        new OrganizadorArchivos(archivos).organizar(carpetaActual, resultado -> {
+            boton.setDisable(false);
+            refrescar();
+            if (resultado.correcto()) {
+                Dialogos.informacion(this, "Organizar", resultado.mensaje());
+            } else {
+                Dialogos.error(this, "Organizar", resultado.mensaje());
+            }
+        });
     }
 
     private void alCambiarCarpeta(RutaVirtual carpeta) {

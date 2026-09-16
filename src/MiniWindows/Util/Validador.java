@@ -6,7 +6,9 @@ import java.util.regex.Pattern;
 
 public final class Validador {
 
-    public static final int LONGITUD_MINIMA_CONTRASENA = 4;
+    public static final int LONGITUD_MINIMA_CONTRASENA = 6;
+    public static final String REGLA_CONTRASENA = "La contrasena debe ser alfanumerica: minimo "
+            + LONGITUD_MINIMA_CONTRASENA + " caracteres con al menos una letra y un numero";
     public static final int LONGITUD_MAXIMA_NOMBRE_ARCHIVO = 60;
     public static final String CARACTERES_PROHIBIDOS = "\\/:*?\"<>|";
 
@@ -35,7 +37,19 @@ public final class Validador {
     }
 
     public static boolean contrasenaValida(String contrasena) {
-        return contrasena != null && contrasena.length() >= LONGITUD_MINIMA_CONTRASENA;
+        if (contrasena == null || contrasena.length() < LONGITUD_MINIMA_CONTRASENA) {
+            return false;
+        }
+        boolean letra = false;
+        boolean numero = false;
+        for (char caracter : contrasena.toCharArray()) {
+            if (Character.isLetter(caracter)) {
+                letra = true;
+            } else if (Character.isDigit(caracter)) {
+                numero = true;
+            }
+        }
+        return letra && numero;
     }
 
     public static boolean edadValida(int edad) {

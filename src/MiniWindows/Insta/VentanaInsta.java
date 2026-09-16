@@ -1,106 +1,174 @@
 package MiniWindows.Insta;
 
+import MiniWindows.Insta.Hilos.CargaIMGS;
 import MiniWindows.Insta.Servicio.ServicioInsta;
 import MiniWindows.Insta.Servicio.ServicioLocal;
-import MiniWindows.Insta.Vistas.*;
+import MiniWindows.Insta.Vistas.BandejaEntrada;
+import MiniWindows.Insta.Vistas.BuscarHashtagInsta;
+import MiniWindows.Insta.Vistas.BuscarInsta;
+import MiniWindows.Insta.Vistas.EditarPerfilInsta;
+import MiniWindows.Insta.Vistas.HacerPost;
+import MiniWindows.Insta.Vistas.InteraccionesInsta;
+import MiniWindows.Insta.Vistas.LineaTiempoInsta;
+import MiniWindows.Insta.Vistas.LoginInsta;
+import MiniWindows.Insta.Vistas.MiPerfilInsta;
+import MiniWindows.Insta.Vistas.RegistrarseInsta;
+import MiniWindows.Insta.Vistas.SugerenciasInsta;
+import MiniWindows.Modelo.UsuarioInsta;
+import MiniWindows.SistemaOp.Apps.ContextoApp;
+import MiniWindows.SistemaOp.Escritorio.Dialogos;
+import MiniWindows.Util.InicializadorInsta;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 
 public class VentanaInsta extends BorderPane {
 
-    private ServicioInsta servicio;
-    private StackPane contenedorVistas;
-    private VBox sideBar;
+    private final ContextoInsta contexto;
+    private final CargaIMGS cargador = new CargaIMGS();
+    private final StackPane contenedor = new StackPane();
+    private final VBox menu = new VBox(4);
 
-    public VentanaInsta() {
-        this.servicio = new ServicioLocal();
-        this.contenedorVistas = new StackPane();
+    public VentanaInsta(ContextoApp contextoApp) {
+        ServicioInsta servicio = new ServicioLocal();
+        InicializadorInsta.sembrarSiHaceFalta(servicio);
 
-        inicializarInterfaz();
-    }
+        String usuarioWindows = contextoApp.getSesion().getUsuario().getUsername();
+        this.contexto = new ContextoInsta(servicio, new SesionInsta(usuarioWindows), contextoApp);
 
-    private void inicializarInterfaz() {
-        sideBar = new VBox(15);
-        sideBar.setPrefWidth(200);
-        sideBar.setPadding(new Insets(25, 15, 20, 20));
-        sideBar.setStyle("-fx-background-color: #ffffff; -fx-border-color: #dbdbdb; -fx-border-width: 0 1 0 0;");
+        construirMenu();
+        contenedor.setStyle("-fx-background-color: " + EstilosInsta.FONDO + ";");
+        setCenter(contenedor);
+        setStyle("-fx-background-color: " + EstilosInsta.FONDO + ";");
 
-        Label lblLogo = new Label("Instagram");
-        lblLogo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-        lblLogo.setPadding(new Insets(0, 0, 20, 5));
-
-        Button btnTimeline = crearBotonMenu("🏠  Inicio");
-        Button btnBuscar = crearBotonMenu("🔍  Buscar");
-        Button btnInbox = crearBotonMenu("💬  Mensajes");
-        Button btnPublicar = crearBotonMenu("➕  Crear");
-        Button btnPerfil = crearBotonMenu("👤  Perfil");
-        Button btnCerrarSesion = crearBotonMenu("🚪  Cerrar Sesión");
-
-        sideBar.getChildren().addAll(lblLogo, btnTimeline, btnBuscar, btnInbox, btnPublicar, btnPerfil, btnCerrarSesion);
-
-        // Sin padding ni bordes blancos para que la vista ocupe todo el espacio
-        contenedorVistas.setPadding(Insets.EMPTY);
-        contenedorVistas.setStyle("-fx-background-color: transparent;");
-        setCenter(contenedorVistas);
-
-        btnTimeline.setOnAction(e -> cambiarVista(new LineaTiempoInsta(servicio)));
-        btnBuscar.setOnAction(e -> cambiarVista(new BuscarInsta(servicio)));
-        btnInbox.setOnAction(e -> cambiarVista(new BandejaEntrada(servicio)));
-        btnPublicar.setOnAction(e -> cambiarVista(new HacerPost(servicio)));
-        btnPerfil.setOnAction(e -> cambiarVista(new MiPerfilInsta(servicio)));
-        btnCerrarSesion.setOnAction(e -> {
-            SesionInsta.getInstancia().cerrarSesion();
-            mostrarPantallaAutenticacion();
-        });
-
-        if (SesionInsta.getInstancia().haySesionActiva()) {
-            mostrarAppPrincipal();
-        } else {
-            mostrarPantallaAutenticacion();
+        if (!reabrirSesionRecordada()) {
+            mostrarLogin();
         }
+
+        sceneProperty().addListener((observable, anterior, actual) -> {
+            if (actual == null) {
+                cargador.detener();
+            }
+        });
     }
 
-    public void mostrarPantallaAutenticacion() {
+    public ContextoInsta getContexto() {
+        return contexto;
+    }
+
+    public CargaIMGS getCargador() {
+        return cargador;
+    }
+
+    private boolean reabrirSesionRecordada() {
+        String recordada = contexto.getSesion().getCuentaRecordada();
+        if (recordada == null) {
+            return false;
+        }
+        UsuarioInsta usuario = contexto.getServicio().perfilDe(recordada);
+        if (usuario == null || !usuario.estaActiva()) {
+            return false;
+        }
+        contexto.getSesion().abrir(usuario);
+        mostrarInicio();
+        return true;
+    }
+
+    private void construirMenu() {
+        menu.setPrefWidth(196);
+        menu.setMinWidth(196);
+        menu.setPadding(new Insets(20, 12, 16, 16));
+        menu.setStyle("-fx-background-color: white; -fx-border-color: " + EstilosInsta.BORDE + "; "
+                + "-fx-border-width: 0 1 0 0;");
+
+        Node logo = EstilosInsta.titulo("INSTA+", 22);
+        VBox.setMargin(logo, new Insets(0, 0, 12, 4));
+
+        menu.getChildren().addAll(logo,
+                opcion("Perfil", () -> mostrarPerfilDe(contexto.getUsuarioActual())),
+                opcion("Cargar imágenes", () -> cambiarVista(new HacerPost(this))),
+                opcion("Comentarios", this::mostrarInicio),
+                opcion("Interacciones", () -> cambiarVista(new InteraccionesInsta(this))),
+                opcion("Buscar profile", () -> cambiarVista(new BuscarInsta(this))),
+                opcion("Buscar hashtag", () -> buscarHashtag("")),
+                opcion("Inbox", () -> abrirConversacionCon(null)),
+                opcion("Editar perfil", this::mostrarEditarPerfil),
+                EstilosInsta.espaciador(),
+                opcion("Cerrar sesión", this::cerrarSesion));
+    }
+
+    private Button opcion(String texto, Runnable accion) {
+        Button boton = new Button(texto);
+        boton.setMaxWidth(Double.MAX_VALUE);
+        boton.setAlignment(Pos.CENTER_LEFT);
+        boton.setFocusTraversable(false);
+        String base = "-fx-font-family: '" + EstilosInsta.FUENTE + "'; -fx-font-size: 13.5px; "
+                + "-fx-text-fill: " + EstilosInsta.TEXTO + "; -fx-background-radius: 8; -fx-padding: 8 12; "
+                + "-fx-cursor: hand; -fx-background-color: ";
+        boton.setStyle(base + "transparent;");
+        boton.setOnMouseEntered(evento -> boton.setStyle(base + "#f2f2f2;"));
+        boton.setOnMouseExited(evento -> boton.setStyle(base + "transparent;"));
+        boton.setOnAction(evento -> accion.run());
+        return boton;
+    }
+
+    public void mostrarLogin() {
         setLeft(null);
-        cambiarVista(new LoginInsta(
-                servicio,
-                this::mostrarAppPrincipal,
-                () -> cambiarVista(new RegistrarseInsta(servicio, this::mostrarPantallaAutenticacion))
-        ));
+        cambiarVista(new LoginInsta(this));
     }
 
-    public void mostrarAppPrincipal() {
-        setLeft(sideBar);
-        cambiarVista(new LineaTiempoInsta(servicio));
+    public void mostrarRegistro() {
+        setLeft(null);
+        cambiarVista(new RegistrarseInsta(this));
     }
 
-    private Button crearBotonMenu(String texto) {
-        Button btn = new Button(texto);
-        btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setAlignment(Pos.CENTER_LEFT);
-        btn.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
-        btn.setStyle("-fx-background-color: transparent; -fx-padding: 10 12; -fx-cursor: hand;");
-
-        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: #f2f2f2; -fx-background-radius: 8; -fx-padding: 10 12; -fx-cursor: hand;"));
-        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: transparent; -fx-padding: 10 12; -fx-cursor: hand;"));
-
-        return btn;
+    public void mostrarSugerenciasIniciales() {
+        setLeft(null);
+        cambiarVista(new SugerenciasInsta(this));
     }
 
-    public void cambiarVista(Node nuevaVista) {
-        contenedorVistas.getChildren().clear();
-        contenedorVistas.getChildren().add(nuevaVista);
+    public void mostrarInicio() {
+        setLeft(menu);
+        cambiarVista(new LineaTiempoInsta(this));
     }
 
-    public ServicioInsta getServicio() {
-        return servicio;
+    public void mostrarPerfilDe(String username) {
+        setLeft(menu);
+        cambiarVista(new MiPerfilInsta(this, username));
+    }
+
+    public void mostrarEditarPerfil() {
+        setLeft(menu);
+        cambiarVista(new EditarPerfilInsta(this));
+    }
+
+    public void buscarHashtag(String hashtag) {
+        setLeft(menu);
+        cambiarVista(new BuscarHashtagInsta(this, hashtag));
+    }
+
+    public void abrirConversacionCon(String username) {
+        setLeft(menu);
+        cambiarVista(new BandejaEntrada(this, username));
+    }
+
+    public boolean confirmar(String titulo, String pregunta) {
+        return Dialogos.confirmar(this, titulo, pregunta);
+    }
+
+    private void cerrarSesion() {
+        if (!confirmar("Cerrar sesión", "¿Seguro que quieres cerrar la sesión de INSTA+?")) {
+            return;
+        }
+        contexto.getSesion().cerrar();
+        mostrarLogin();
+    }
+
+    public void cambiarVista(Node vista) {
+        contenedor.getChildren().setAll(vista);
     }
 }

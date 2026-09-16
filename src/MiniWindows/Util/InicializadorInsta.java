@@ -1,39 +1,99 @@
-package MiniWindows.Insta.Util;
+package MiniWindows.Util;
 
-import MiniWindows.Insta.Servicio.ServicioLocal;
+import MiniWindows.Estructuras.ListaEnlazada;
+import MiniWindows.Excepciones.MiniWindowsException;
+import MiniWindows.Insta.Imagen.ArteGenerado;
+import MiniWindows.Insta.Imagen.ProcesadorImagen;
+import MiniWindows.Insta.Servicio.ServicioInsta;
+import MiniWindows.Modelo.Mensaje;
+import MiniWindows.Modelo.Publicacion;
 import MiniWindows.Modelo.UsuarioInsta;
-import MiniWindows.Util.Rutas;
-import java.io.File;
 
-public class InicializadorInsta {
+import java.time.LocalDateTime;
 
-    public static void cargarDatosIniciales(ServicioLocal servicio) {
-        File archivoUsuarios = new File(Rutas.USERS_FILE);
+public final class InicializadorInsta {
 
-        if (!archivoUsuarios.exists()) {
-            try {
-                UsuarioInsta noticias = new UsuarioInsta(
-                        "Noticias Globales", 'M', "noticias_360", "Noti#2026", 30, ""
-                );
-                UsuarioInsta deportes = new UsuarioInsta(
-                        "Deportes Central", 'M', "deportes_total", "Dep#2026", 25, ""
-                );
-                UsuarioInsta entretenimiento = new UsuarioInsta(
-                        "Mundo Entretenimiento", 'F', "enter_world", "Ent#2026", 22, ""
-                );
+    private static final String CLAVE_DEMO = "Insta#2026";
 
-                servicio.registrarUsuario(noticias);
-                servicio.registrarUsuario(deportes);
-                servicio.registrarUsuario(entretenimiento);
+    private static final String[][] FAMOSOS = {
+            {"lucia.travel", "Lucia Fernandez", "F", "27", "Recorriendo el mundo con una mochila"},
+            {"chef_marco", "Marco Ruiz", "M", "34", "Cocina casera sin complicaciones"},
+            {"mirador_espacial", "Mirador Espacial", "M", "12", "Astronomia para todos"},
+            {"ritmo_catracho", "Ritmo Catracho", "F", "8", "La musica de Honduras en un solo lugar"},
+            {"depor_total", "Deportes Total", "M", "15", "Resultados y analisis cada semana"},
+            {"tec_al_dia", "Tec al Dia", "M", "9", "Tecnologia explicada facil"},
+            {"ana.fitness", "Ana Mejia", "F", "29", "Entrenamientos cortos para gente ocupada"},
+            {"noticias_360", "Noticias 360", "F", "20", "Informacion verificada las 24 horas"}
+    };
 
-                // Publicaciones de ejemplo iniciales
-                servicio.hacerPost("noticias_360", "¡Bienvenidos a Noticias 360! Cobertura 24/7 #noticias", "", "Cuadrada");
-                servicio.hacerPost("deportes_total", "Resumen de la jornada deportiva semanal #deportes", "", "Cuadrada");
-                servicio.hacerPost("enter_world", "Nuevos lanzamientos de la semana en la música y cine #cine", "", "Cuadrada");
+    private static final String[][] PUBLICACIONES = {
+            {"lucia.travel", "Amanecer en la isla, valio la pena madrugar #viajes #honduras", "Cuadrado"},
+            {"lucia.travel", "Tres dias de ruta y todavia me sobran ganas #viajes #mochilero", "Retrato"},
+            {"chef_marco", "Baleadas de desayuno, receta en los comentarios #cocina #honduras", "Cuadrado"},
+            {"chef_marco", "El truco del sofrito esta en la paciencia #cocina, gracias @lucia.travel por la receta", "Paisaje"},
+            {"mirador_espacial", "La luna de esta noche vista desde el patio #astronomia #ciencia", "Cuadrado"},
+            {"ritmo_catracho", "Ensayo de la semana, se viene algo bueno #musica", "Paisaje"},
+            {"depor_total", "Resumen de la jornada: dos goles en el ultimo minuto #deportes, comenta @tec_al_dia", "Paisaje"},
+            {"tec_al_dia", "Como organizar tu escritorio virtual en cinco pasos #tecnologia", "Cuadrado"},
+            {"ana.fitness", "Rutina de 15 minutos sin equipo #fitness #salud", "Retrato"},
+            {"noticias_360", "Resumen informativo de la manana #noticias con @lucia.travel en portada", "Cuadrado"}
+    };
 
-            } catch (Exception e) {
-                System.err.println("Error al inicializar cuentas por defecto: " + e.getMessage());
+    private InicializadorInsta() {
+    }
+
+    public static void sembrarSiHaceFalta(ServicioInsta servicio) {
+        if (servicio.perfilDe(FAMOSOS[0][0]) != null) {
+            return;
+        }
+        try {
+            for (int i = 0; i < FAMOSOS.length; i++) {
+                String[] datos = FAMOSOS[i];
+                UsuarioInsta famoso = new UsuarioInsta(datos[1], datos[2].charAt(0), datos[0],
+                        CLAVE_DEMO, Integer.parseInt(datos[3]), ArteGenerado.avatar(datos[1], i + 1));
+                famoso.setBiografia(datos[4]);
+                famoso.setVerificada(true);
+                servicio.registrar(famoso);
+            }
+            LocalDateTime momento = LocalDateTime.now().minusDays(PUBLICACIONES.length);
+            for (int i = 0; i < PUBLICACIONES.length; i++) {
+                String[] datos = PUBLICACIONES[i];
+                String formato = datos[2];
+                byte[] imagen = ArteGenerado.publicacion(i + 2, formato);
+                servicio.publicar(new Publicacion(datos[0], datos[1], imagen, formato,
+                        "", momento.plusDays(i), 12 + i * 7));
+            }
+            entrelazar(servicio);
+            conversarDeEjemplo(servicio);
+        } catch (MiniWindowsException error) {
+            System.err.println("No se pudo sembrar el contenido de INSTA+: " + error.getMessage());
+        }
+    }
+
+    public static ListaEnlazada<String> cuentasSugeridas() {
+        ListaEnlazada<String> nombres = new ListaEnlazada<>();
+        for (String[] datos : FAMOSOS) {
+            nombres.agregar(datos[0]);
+        }
+        return nombres;
+    }
+
+    private static void conversarDeEjemplo(ServicioInsta servicio) throws MiniWindowsException {
+        servicio.enviarMensaje(new Mensaje("chef_marco", "lucia.travel", "Te mande la receta que pediste"));
+        servicio.enviarMensaje(new Mensaje("lucia.travel", "chef_marco", "Gracias, la pruebo hoy mismo"));
+    }
+
+    private static void entrelazar(ServicioInsta servicio) throws MiniWindowsException {
+        for (int i = 0; i < FAMOSOS.length; i++) {
+            for (int j = 0; j < FAMOSOS.length; j++) {
+                if (i != j && (i + j) % 3 == 0) {
+                    servicio.seguir(FAMOSOS[i][0], FAMOSOS[j][0]);
+                }
             }
         }
+    }
+
+    public static String formatoPorDefecto() {
+        return ProcesadorImagen.CUADRADO;
     }
 }
